@@ -1,4 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../state/app_controller.dart';
+
+extension AppThemeColors on BuildContext {
+  bool get isDarkMode => watch<AppController>().isDarkMode;
+
+  Color get bg1 => isDarkMode ? Colors.black : Colors.white;
+  Color get bg2 => isDarkMode ? const Color(0xFF1A0000) : Colors.red.shade50;
+  Color get cardColor => isDarkMode ? const Color(0xFF0A0A0A) : Colors.white;
+  Color get navBarColor => isDarkMode ? const Color(0xFF050505) : Colors.white;
+  
+  Color get textPrimary => isDarkMode ? Colors.white : Colors.black87;
+  Color get textSecondary => isDarkMode ? Colors.white54 : Colors.black54;
+  Color get dividerColor => isDarkMode ? Colors.white24 : Colors.black12;
+  
+  Color get borderColor => isDarkMode ? Colors.red.withOpacity(0.3) : Colors.red.shade200;
+}
 
 class AppColors {
   static const strongRed = Color(0xFFE50914);

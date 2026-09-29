@@ -127,7 +127,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               height: 24, 
                               child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                             )
-                          : const Row(
+                          : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text('Iniciar sesión', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -160,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.white12),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
                         Expanded(
                           child: Row(

@@ -30,31 +30,31 @@ class _AdminScreenState extends State<AdminScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Panel Admin'),
+        title: Text('Panel Admin'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back),
           onPressed: () => context.go('/history'),
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16),
         children: [
-          const Text(
+          Text(
             'Push simulado',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           TextField(
             controller: _title,
-            decoration: const InputDecoration(labelText: 'Título'),
+            decoration: InputDecoration(labelText: 'Título'),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           TextField(
             controller: _message,
             maxLines: 2,
-            decoration: const InputDecoration(labelText: 'Mensaje'),
+            decoration: InputDecoration(labelText: 'Mensaje'),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           ElevatedButton(
             onPressed: () {
               if (_title.text.trim().isEmpty || _message.text.trim().isEmpty) {
@@ -64,14 +64,14 @@ class _AdminScreenState extends State<AdminScreen> {
               _title.clear();
               _message.clear();
             },
-            child: const Text('Enviar alerta'),
+            child: Text('Enviar alerta'),
           ),
-          const SizedBox(height: 24),
-          const Text(
+          SizedBox(height: 24),
+          Text(
             'Usuarios',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           for (final u in c.allUsers)
             Card(
               child: ListTile(
@@ -85,12 +85,12 @@ class _AdminScreenState extends State<AdminScreen> {
                     : null,
               ),
             ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: 16),
+          Text(
             'Últimos 5 servicios globales',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           for (final s in recent)
             Card(
               child: ListTile(

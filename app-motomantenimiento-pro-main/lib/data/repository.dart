@@ -33,6 +33,7 @@ class Repository {
 
   Future<void> init() async {
     _db = await AppDatabase.instance();
+    await _db!.execute('CREATE TABLE IF NOT EXISTS service_types (name TEXT PRIMARY KEY, isDefault INTEGER DEFAULT 0)');
     notifications = [
       InAppNotification(
         title: 'Bienvenido a Casa Racing',
@@ -163,6 +164,27 @@ class Repository {
     await _emitAllServices();
   }
 
+  Future<List<String>> getServiceTypes() async {
+    final rows = await db.query('service_types', orderBy: 'name ASC');
+    return rows.map((r) => r['name'] as String).toList();
+  }
+
+  Future<void> insertServiceType(String name, {int isDefault = 0}) async {
+    await db.insert(
+      'service_types',
+      {'name': name, 'isDefault': isDefault},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<void> deleteServiceType(String name) async {
+    await db.delete(
+      'service_types',
+      where: 'name = ? AND isDefault = 0', // prevent deleting defaults
+      whereArgs: [name],
+    );
+  }
+
   void triggerFirebaseSync() {
     firebaseStatus = FirebaseSyncStatus.pending;
     Future<void>.delayed(const Duration(milliseconds: 1200), () {
@@ -182,6 +204,22 @@ class Repository {
   }
 
   Future<void> tryPrepopulate() async {
+    final existingTypes = await getServiceTypes();
+    if (existingTypes.isEmpty) {
+      for (final t in [
+        'Cambio de Aceite',
+        'Llantas',
+        'Frenos',
+        'Transmisión',
+        'Suspensión',
+        'Filtros',
+        'Bujías',
+        'Otro'
+      ]) {
+        await insertServiceType(t, isDefault: 1);
+      }
+    }
+
     final users = await getAllUsers();
     if (users.isNotEmpty) return;
 

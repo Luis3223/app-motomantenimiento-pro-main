@@ -21,6 +21,8 @@ class AppController extends ChangeNotifier {
   List<AppUser> allUsers = [];
   List<ServiceRecord> allServices = [];
   List<ServiceRecord> activeUserServices = [];
+  List<String> serviceTypes = [];
+  bool isDarkMode = true;
   OilChangeStatus? oilChangeStatus;
   ServiceRecord? selectedService;
   String? feedbackMessage;
@@ -33,10 +35,17 @@ class AppController extends ChangeNotifier {
   StreamSubscription<List<ServiceRecord>>? _userServicesSub;
   Timer? _syncTimer;
 
+  void toggleTheme() {
+    isDarkMode = !isDarkMode;
+    notifyListeners();
+  }
+
   Future<void> init() async {
     await _repository.init();
     notifications = List.of(_repository.notifications);
     firebaseStatus = _repository.firebaseStatus;
+    
+    serviceTypes = await _repository.getServiceTypes();
 
     _usersSub = _repository.allUsers.listen((users) {
       allUsers = users;
@@ -298,6 +307,20 @@ class AppController extends ChangeNotifier {
     await _repository.deleteService(service);
     _syncFromRepo();
     feedbackMessage = 'Registro de servicio eliminado.';
+    notifyListeners();
+  }
+
+  Future<void> addServiceType(String type) async {
+    final t = type.trim();
+    if (t.isEmpty || serviceTypes.contains(t)) return;
+    await _repository.insertServiceType(t);
+    serviceTypes = await _repository.getServiceTypes();
+    notifyListeners();
+  }
+
+  Future<void> removeServiceType(String type) async {
+    await _repository.deleteServiceType(type);
+    serviceTypes = await _repository.getServiceTypes();
     notifyListeners();
   }
 

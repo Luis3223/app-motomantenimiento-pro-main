@@ -4,18 +4,20 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../state/app_controller.dart';
+import '../theme/app_theme.dart';
 import '../screens/add_registry_screen.dart';
 import '../screens/admin_screen.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/detail_screen.dart';
 import '../screens/history_screen.dart';
 import '../screens/login_screen.dart';
+import '../screens/manage_service_types_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/register_screen.dart';
 import '../widgets/notification_banner.dart';
 
 const whatsappNumber = '3225062876';
-const storeUrl = 'https://tiendavirtualcasaracing.lovable.app/';
+const storeUrl = 'https://tiendavirtualcasaracing.vercel.app/';
 
 Future<void> openWhatsApp() async {
   final uri = Uri.parse('https://wa.me/57$whatsappNumber');
@@ -47,11 +49,15 @@ GoRouter createAppRouter(AppController controller) {
     routes: [
       GoRoute(
         path: '/login',
-        builder: (context, state) => const LoginScreen(),
+        builder: (context, state) => LoginScreen(),
       ),
       GoRoute(
         path: '/register',
-        builder: (context, state) => const RegisterScreen(),
+        builder: (context, state) => RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/manage-services',
+        builder: (context, state) => ManageServiceTypesScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -62,11 +68,11 @@ GoRouter createAppRouter(AppController controller) {
             routes: [
               GoRoute(
                 path: '/garage',
-                builder: (context, state) => const DashboardScreen(),
+                builder: (context, state) => DashboardScreen(),
                 routes: [
                   GoRoute(
                     path: 'detail',
-                    builder: (context, state) => const DetailScreen(),
+                    builder: (context, state) => DetailScreen(),
                   ),
                 ],
               ),
@@ -76,15 +82,15 @@ GoRouter createAppRouter(AppController controller) {
             routes: [
               GoRoute(
                 path: '/history',
-                builder: (context, state) => const HistoryScreen(),
+                builder: (context, state) => HistoryScreen(),
                 routes: [
                   GoRoute(
                     path: 'add',
-                    builder: (context, state) => const AddRegistryScreen(),
+                    builder: (context, state) => AddRegistryScreen(),
                   ),
                   GoRoute(
                     path: 'admin',
-                    builder: (context, state) => const AdminScreen(),
+                    builder: (context, state) => AdminScreen(),
                   ),
                 ],
               ),
@@ -94,7 +100,7 @@ GoRouter createAppRouter(AppController controller) {
             routes: [
               GoRoute(
                 path: '/profile',
-                builder: (context, state) => const ProfileScreen(),
+                builder: (context, state) => ProfileScreen(),
               ),
             ],
           ),
@@ -105,7 +111,7 @@ GoRouter createAppRouter(AppController controller) {
 }
 
 class MainShell extends StatelessWidget {
-  const MainShell({super.key, required this.navigationShell});
+  MainShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
 
@@ -123,29 +129,77 @@ class MainShell extends StatelessWidget {
               ),
             ],
           ),
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: navigationShell.currentIndex,
-            onDestinationSelected: navigationShell.goBranch,
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.two_wheeler_outlined),
-                selectedIcon: Icon(Icons.two_wheeler),
-                label: 'Mi Garage',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.history_outlined),
-                selectedIcon: Icon(Icons.history),
-                label: 'Historial',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.person_outline),
-                selectedIcon: Icon(Icons.person),
-                label: 'Mi Perfil',
-              ),
-            ],
+          bottomNavigationBar: Container(
+            color: context.navBarColor,
+            padding: EdgeInsets.only(top: 10, bottom: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _NavItem(
+                  icon: Icons.two_wheeler,
+                  label: 'Mi Garage',
+                  isSelected: navigationShell.currentIndex == 0,
+                  onTap: () => navigationShell.goBranch(0),
+                ),
+                _NavItem(
+                  icon: Icons.history,
+                  label: 'Historial',
+                  isSelected: navigationShell.currentIndex == 1,
+                  onTap: () => navigationShell.goBranch(1),
+                ),
+                _NavItem(
+                  icon: Icons.person_outline,
+                  label: 'Mi Perfil',
+                  isSelected: navigationShell.currentIndex == 2,
+                  onTap: () => navigationShell.goBranch(2),
+                ),
+              ],
+            ),
           ),
         );
       },
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  _NavItem({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: isSelected ? Colors.red : context.textSecondary, size: 24),
+          SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? Colors.red : context.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+          SizedBox(height: 6),
+          Container(
+            height: 2,
+            width: 60,
+            color: isSelected ? Colors.red : Colors.transparent,
+          ),
+        ],
+      ),
     );
   }
 }
