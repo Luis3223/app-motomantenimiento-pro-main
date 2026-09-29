@@ -81,6 +81,10 @@ class ProfileScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.settings, color: Colors.white),
+                    onPressed: () => context.go('/profile/settings'),
+                  ),
                 ],
               ),
             ),

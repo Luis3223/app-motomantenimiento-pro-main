@@ -42,7 +42,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ],
         ),
         child: FloatingActionButton(
-          onPressed: () => context.go('/garage/add_registry'),
+          onPressed: () => context.go('/history/add'),
           backgroundColor: AppColors.strongRed,
           child: const Icon(Icons.add, color: Colors.white, size: 32),
         ),

@@ -14,6 +14,7 @@ import '../screens/login_screen.dart';
 import '../screens/manage_service_types_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/register_screen.dart';
+import '../screens/settings_screen.dart';
 import '../widgets/notification_banner.dart';
 
 const whatsappNumber = '3225062876';
@@ -101,6 +102,12 @@ GoRouter createAppRouter(AppController controller) {
               GoRoute(
                 path: '/profile',
                 builder: (context, state) => ProfileScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'settings',
+                    builder: (context, state) => SettingsScreen(),
+                  ),
+                ],
               ),
             ],
           ),

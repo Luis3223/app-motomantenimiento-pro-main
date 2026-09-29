@@ -88,7 +88,7 @@ class _AddRegistryScreenState extends State<AddRegistryScreen> {
 
     if (!mounted) return;
     setState(() => _saving = false);
-    context.go('/garage/history');
+    context.go('/history');
   }
 
   @override
@@ -120,7 +120,7 @@ class _AddRegistryScreenState extends State<AddRegistryScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-                    onPressed: () => context.go('/garage/history'),
+                    onPressed: () => context.go('/history'),
                   ),
                   Expanded(
                     child: Column(
@@ -315,7 +315,7 @@ class _AddRegistryScreenState extends State<AddRegistryScreen> {
                               side: BorderSide(color: context.dividerColor),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             ),
-                            onPressed: () => context.go('/garage/history'),
+                            onPressed: () => context.go('/history'),
                             child: const Text('Cancelar', style: TextStyle(fontSize: 16)),
                           ),
                         ),
