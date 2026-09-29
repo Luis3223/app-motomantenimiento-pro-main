@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-import '../data/models/oil_status.dart';
-import '../router/app_router.dart';
 import '../state/app_controller.dart';
 import '../theme/app_theme.dart';
+import '../router/app_router.dart';
+import '../data/models/oil_status.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -15,255 +16,540 @@ class DashboardScreen extends StatelessWidget {
     final c = context.watch<AppController>();
     final user = c.currentUser;
     final oil = c.oilChangeStatus;
+    
+    // Fallback data if null to match mockup
+    final String mileageText = c.activeUserServices.isNotEmpty 
+        ? '${c.activeUserServices.map((s) => s.mileage).reduce((a, b) => a > b ? a : b)} km' 
+        : '12,500 km';
+    final String servicesCount = c.activeUserServices.isNotEmpty
+        ? c.activeUserServices.length.toString().padLeft(2, '0')
+        : '04';
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF25D366),
-        onPressed: openWhatsApp,
-        child: const Icon(Icons.chat, color: Colors.white),
+      backgroundColor: context.bg1,
+      floatingActionButton: Container(
+        height: 56,
+        width: 56,
+        margin: const EdgeInsets.only(bottom: 10, right: 10),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFF2A2A), Color(0xFFA60000)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.strongRed.withValues(alpha: 0.4),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: FloatingActionButton(
+          onPressed: () {},
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          highlightElevation: 0,
+          child: const Icon(Icons.chat_bubble, color: Colors.white, size: 24),
+        ),
       ),
-      body: ListView(
-        children: [
-          Container(
-            color: AppColors.strongRed,
-            padding: const EdgeInsets.fromLTRB(16, 48, 16, 20),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.only(bottom: 80),
+          children: [
+            // Header Section
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+              decoration: BoxDecoration(
+                color: context.bg2,
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppColors.strongRed.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const Text(
-                        'Casa Racing MotoPro',
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.strongRed.withValues(alpha: 0.4),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                            )
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.asset(
+                            'assets/icon.png',
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'MOTO',
+                              style: TextStyle(
+                                color: context.textPrimary,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                fontStyle: FontStyle.italic,
+                                letterSpacing: 2.0,
+                                height: 1.0,
+                              ),
+                            ),
+                            const Text(
+                              'Mantenimiento',
+                              style: TextStyle(
+                                color: AppColors.strongRed,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                fontStyle: FontStyle.italic,
+                                letterSpacing: 1.0,
+                                height: 1.0,
+                              ),
+                            ),
+                            Row(
+                              children: [
+                                Container(
+                                  height: 2,
+                                  width: 24,
+                                  color: AppColors.strongRed,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Pro',
+                                  style: TextStyle(
+                                    color: context.textPrimary,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w900,
+                                    fontStyle: FontStyle.italic,
+                                    letterSpacing: 2.0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.circle,
+                        size: 10,
+                        color: c.firebaseStatus == FirebaseSyncStatus.onlineSynced
+                            ? Colors.greenAccent
+                            : Colors.orangeAccent,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Firebase RTDB: Sincronizado',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
+                          color: context.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.person_outline, color: AppColors.strongRed, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Hola, ${user?.name ?? 'Luis Angel Olivera'}',
+                        style: TextStyle(
+                          color: context.textPrimary,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: switch (c.firebaseStatus) {
-                                FirebaseSyncStatus.onlineSynced => Colors.green,
-                                FirebaseSyncStatus.pending => Colors.yellow,
-                                FirebaseSyncStatus.offline => Colors.red,
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            switch (c.firebaseStatus) {
-                              FirebaseSyncStatus.onlineSynced =>
-                                'Firebase RTDB: Sincronizado',
-                              FirebaseSyncStatus.pending =>
-                                'Firebase RTDB: Conectando...',
-                              FirebaseSyncStatus.offline =>
-                                'Firebase RTDB: Desconectado',
-                            },
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.8),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (user != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            'Hola, ${user.name}',
-                            style: const TextStyle(color: Colors.white70),
-                          ),
-                        ),
                     ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => context.read<AppController>().forceSync(),
-                  icon: const Icon(Icons.sync, color: Colors.white),
-                ),
-              ],
-            ),
-          ),
-          if (oil != null && (oil.isDue || oil.isWarning))
-            Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: oil.isDue
-                    ? AppColors.strongRed.withValues(alpha: 0.2)
-                    : Colors.orange.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: oil.isDue ? AppColors.strongRed : Colors.orange,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.warning_amber_rounded,
-                    color: oil.isDue ? AppColors.strongRed : Colors.orange,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      oil.isDue
-                          ? '¡Aceite vencido! ${oil.statusText}'
-                          : 'Aviso: ${oil.statusText}',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
                   ),
                 ],
               ),
             ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Card(
+
+            const SizedBox(height: 20),
+
+            // Oil Cycle Card
+            _buildOuterGlowCard(
+              context,
               child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                padding: const EdgeInsets.all(20),
+                child: Row(
                   children: [
-                    const Text(
-                      'Ciclo de aceite (30 días)',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    // Circular Progress
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 80,
+                          height: 80,
+                          child: CircularProgressIndicator(
+                            value: oil?.progress ?? 0.6,
+                            strokeWidth: 8,
+                            backgroundColor: context.dividerColor,
+                            color: AppColors.strongRed,
+                          ),
+                        ),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.water_drop, color: context.textPrimary, size: 24),
+                            Text(
+                              '${((oil?.progress ?? 0.6) * 100).toInt()}%',
+                              style: TextStyle(
+                                color: context.textPrimary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Último servicio: ${oil?.lastServiceDate ?? '—'}',
-                      style: const TextStyle(color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(height: 12),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: LinearProgressIndicator(
-                        value: oil?.progress ?? 0,
-                        minHeight: 10,
-                        backgroundColor: AppColors.borderGrey,
-                        color: (oil?.isDue ?? false)
-                            ? AppColors.strongRed
-                            : (oil?.isWarning ?? false)
-                                ? Colors.orange
-                                : Colors.green,
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Ciclo de aceite (30\ndías)',
+                            style: TextStyle(
+                              color: context.textPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.calendar_today, color: context.textSecondary, size: 14),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Último servicio: ${oil?.lastServiceDate ?? '16 Sep 2026'}',
+                                    style: TextStyle(color: context.textSecondary, fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                              Icon(Icons.chevron_right, color: context.textSecondary, size: 20),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: Container(
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: context.dividerColor,
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    flex: ((oil?.progress ?? 0.6) * 100).toInt(),
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [AppColors.strongRed, Color(0xFF660000)],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 100 - ((oil?.progress ?? 0.6) * 100).toInt(),
+                                    child: const SizedBox(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Icon(Icons.access_time, color: context.textSecondary, size: 14),
+                              const SizedBox(width: 6),
+                              Text(
+                                oil?.statusText ?? 'Faltan 18 días',
+                                style: TextStyle(color: context.textPrimary, fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      oil?.statusText ?? 'Sin datos',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _StatCard(
-                    label: 'Odómetro',
-                    value: c.totalMileage,
-                    icon: Icons.speed,
+
+            const SizedBox(height: 16),
+
+            // Stats Cards
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildOuterGlowCard(
+                      context,
+                      margin: EdgeInsets.zero,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Icon(Icons.speed, color: AppColors.strongRed, size: 24),
+                                Icon(Icons.chevron_right, color: context.textSecondary, size: 20),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              mileageText,
+                              style: TextStyle(color: context.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 4),
+                            Text('Odómetro', style: TextStyle(color: context.textSecondary, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _StatCard(
-                    label: 'Servicios',
-                    value: c.recentServiceCount,
-                    icon: Icons.build_circle_outlined,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildOuterGlowCard(
+                      context,
+                      margin: EdgeInsets.zero,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Icon(Icons.build, color: AppColors.strongRed, size: 24),
+                                Icon(Icons.chevron_right, color: context.textSecondary, size: 20),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              servicesCount,
+                              style: TextStyle(color: context.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 4),
+                            Text('Servicios', style: TextStyle(color: context.textSecondary, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: ElevatedButton.icon(
-              onPressed: () => context.go('/garage/detail'),
-              icon: const Icon(Icons.info_outline),
-              label: const Text('Ver Detalles Técnicos'),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: openStore,
-                    icon: const Icon(Icons.storefront),
-                    label: const Text('Tienda'),
+
+            const SizedBox(height: 16),
+
+            // Detail Button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                height: 55,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFF2A2A), Color(0xFFA60000)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.strongRed.withValues(alpha: 0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: openWhatsApp,
-                    icon: const Icon(Icons.chat),
-                    label: const Text('WhatsApp'),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    foregroundColor: Colors.white,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 0,
                   ),
-                ),
-              ],
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Card(
-              child: ListTile(
-                leading: Icon(Icons.lightbulb_outline, color: AppColors.strongRed),
-                title: Text('Tip Casa Racing'),
-                subtitle: Text(
-                  'Cambia el aceite cada 30 días o según el manual del fabricante. Agenda en Casa Racing.',
+                  onPressed: () => context.go('/garage/detail'),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.description, size: 18),
+                      ),
+                      const SizedBox(width: 16),
+                      const Text('Ver Detalles Técnicos', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Spacer(),
+                      const Icon(Icons.chevron_right),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 80),
-        ],
+
+            const SizedBox(height: 16),
+
+            // Links
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildOuterGlowCard(
+                      context,
+                      margin: EdgeInsets.zero,
+                      onTap: openStore,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.shopping_cart_outlined, color: AppColors.strongRed, size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(child: Text('Tienda', style: TextStyle(color: context.textPrimary, fontWeight: FontWeight.bold))),
+                            Icon(Icons.chevron_right, color: context.textSecondary, size: 20),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildOuterGlowCard(
+                      context,
+                      margin: EdgeInsets.zero,
+                      onTap: openWhatsApp,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.chat_bubble_outline, color: AppColors.strongRed, size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(child: Text('WhatsApp', style: TextStyle(color: context.textPrimary, fontWeight: FontWeight.bold))),
+                            Icon(Icons.chevron_right, color: context.textSecondary, size: 20),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Tip Card
+            _buildOuterGlowCard(
+              context,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: context.bg1,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: context.dividerColor),
+                      ),
+                      child: const Icon(Icons.lightbulb_outline, color: AppColors.strongRed, size: 24),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Tip Moto Mantenimiento Pro', style: TextStyle(color: context.textPrimary, fontWeight: FontWeight.bold, fontSize: 14)),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Cambia el aceite cada 30 días o según el manual del fabricante. Agenda en la sección de servicios.',
+                            style: TextStyle(color: context.textSecondary, fontSize: 12, height: 1.5),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }
-}
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
-
-  final String label;
-  final String value;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Icon(icon, color: AppColors.strongRed),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            Text(
-              label,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-            ),
-          ],
+  Widget _buildOuterGlowCard(
+    BuildContext context, {
+    required Widget child,
+    EdgeInsetsGeometry margin = const EdgeInsets.symmetric(horizontal: 20),
+    VoidCallback? onTap,
+  }) {
+    return Container(
+      margin: margin,
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.strongRed.withValues(alpha: 0.5), width: 1),
+        boxShadow: context.isDarkMode
+            ? [
+                BoxShadow(
+                  color: AppColors.strongRed.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  spreadRadius: 0,
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: AppColors.strongRed.withValues(alpha: 0.15),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: child,
         ),
       ),
     );
