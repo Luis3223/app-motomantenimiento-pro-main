@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -7,9 +8,16 @@ import 'database/app_database.dart';
 import 'models/oil_status.dart';
 import 'models/service_record.dart';
 import 'models/user.dart';
+import 'security/password_hasher.dart';
 
 class Repository {
-  Repository();
+  /// [seedDemoData] siembra las cuentas demo; por defecto solo en debug, para
+  /// que las credenciales de prueba no lleguen a un build de release.
+  Repository({PasswordHasher? hasher, this.seedDemoData = kDebugMode})
+    : _hasher = hasher ?? const PasswordHasher();
+
+  final PasswordHasher _hasher;
+  final bool seedDemoData;
 
   Database? _db;
   AppUser? currentUser;
@@ -197,6 +205,14 @@ class Repository {
   }
 
   Future<void> tryPrepopulate() async {
+    await _seedServiceTypes();
+    if (seedDemoData) await _seedDemoData();
+  }
+
+  Future<void> _insertDemoUser(AppUser user) =>
+      insertUser(user.copyWith(password: _hasher.hash(user.password)));
+
+  Future<void> _seedServiceTypes() async {
     final existingTypes = await getServiceTypes();
     if (existingTypes.isEmpty) {
       for (final t in [
@@ -212,11 +228,14 @@ class Repository {
         await insertServiceType(t, isDefault: 1);
       }
     }
+  }
 
+  /// Cuentas y servicios de demostración, solo en una base vacía.
+  Future<void> _seedDemoData() async {
     final users = await getAllUsers();
     if (users.isNotEmpty) return;
 
-    await insertUser(
+    await _insertDemoUser(
       const AppUser(
         id: 'luis@gmail.com',
         email: 'luis@gmail.com',
@@ -229,7 +248,7 @@ class Repository {
         profileImage: 'moto_avatar_1',
       ),
     );
-    await insertUser(
+    await _insertDemoUser(
       const AppUser(
         id: 'honda@gmail.com',
         email: 'honda@gmail.com',
@@ -242,7 +261,7 @@ class Repository {
         profileImage: 'moto_avatar_2',
       ),
     );
-    await insertUser(
+    await _insertDemoUser(
       const AppUser(
         id: 'admin@casaracing.com',
         email: 'admin@casaracing.com',
@@ -332,22 +351,50 @@ class Repository {
 
   Future<bool> login(String email, String password) async {
     final user = await getUserByEmail(email);
-    if (user != null && user.password == password) {
+    if (user != null && _hasher.verify(password, user.password)) {
       currentUser = user;
+      await _saveSession(user.id);
       return true;
     }
     return false;
   }
 
-  void logout() {
+  Future<void> logout() async {
     currentUser = null;
+    await db.delete('session');
   }
 
+  /// Recupera al usuario de la sesión guardada; `null` si no hay ninguna
+  /// o si su cuenta ya no existe.
+  Future<AppUser?> restoreSession() async {
+    final rows = await db.query('session', limit: 1);
+    if (rows.isEmpty) return null;
+    final userRows = await db.query(
+      'users',
+      where: 'id = ?',
+      whereArgs: [rows.first['userId']],
+      limit: 1,
+    );
+    if (userRows.isEmpty) {
+      await db.delete('session');
+      return null;
+    }
+    return currentUser = AppUser.fromMap(userRows.first);
+  }
+
+  Future<void> _saveSession(String userId) => db.insert('session', {
+    'id': 1,
+    'userId': userId,
+  }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+  /// Registra al usuario guardando solo el hash de su contraseña.
   Future<bool> register(AppUser user) async {
     final existing = await getUserByEmail(user.email);
     if (existing != null) return false;
-    await insertUser(user);
-    currentUser = user;
+    final stored = user.copyWith(password: _hasher.hash(user.password));
+    await insertUser(stored);
+    currentUser = stored;
+    await _saveSession(stored.id);
     return true;
   }
 

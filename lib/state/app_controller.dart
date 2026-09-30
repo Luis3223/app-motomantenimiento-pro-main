@@ -57,6 +57,8 @@ class AppController extends ChangeNotifier {
       notifyListeners();
     });
 
+    if (await _repository.restoreSession() != null) _startSession();
+
     ready = true;
     notifyListeners();
   }
@@ -362,7 +364,7 @@ class AppController extends ChangeNotifier {
   }
 
   void handleLogout() {
-    _repository.logout();
+    unawaited(_repository.logout());
     _userServicesSub?.cancel();
     currentUser = null;
     activeUserServices = [];

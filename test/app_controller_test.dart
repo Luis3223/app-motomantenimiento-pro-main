@@ -182,4 +182,31 @@ void main() {
       expect(controller.currentUser?.bikeVin, 'JH2SD12A8PK802145');
     });
   });
+
+  group('sesión persistente', () {
+    test('al arrancar restaura al usuario de la sesión guardada', () async {
+      repo = FakeRepository()..savedSession = testUser();
+      controller = AppController(repository: repo);
+
+      await controller.init();
+
+      expect(controller.currentUser?.email, 'luis@gmail.com');
+      expect(controller.ready, isTrue);
+    });
+
+    test('sin sesión guardada arranca sin usuario', () async {
+      expect(controller.currentUser, isNull);
+    });
+
+    test('cerrar sesión limpia el usuario', () async {
+      repo = FakeRepository()..savedSession = testUser();
+      controller = AppController(repository: repo);
+      await controller.init();
+
+      controller.handleLogout();
+
+      expect(controller.currentUser, isNull);
+      expect(repo.currentUser, isNull);
+    });
+  });
 }

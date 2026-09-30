@@ -1,5 +1,12 @@
 # Changenotes
 
+## [*0.0.3*] 2026-09-30
+- **Seguridad:** las contraseñas se guardan con hash PBKDF2-SHA256 y sal; las cuentas existentes se convierten al actualizar (esquema v3).
+- **Seguridad:** las cuentas demo (`admin` / `admin`, etc.) solo se crean en debug; en release no existen.
+- **Sesión:** la sesión se conserva al cerrar la app y se borra al cerrar sesión.
+- **Dependencias:** `crypto`.
+- **Tests:** 9 tests nuevos (hasher con vector RFC 7914, sesión persistente).
+
 ## [*0.0.2*] 2026-09-30
 - **Veracidad:** la app ya no afirma sincronizar con Firebase; los textos dicen que los datos se guardan en el dispositivo y se quitó el indicador del Dashboard.
 - **Registro:** año y VIN opcionales; ya no se inventan. El perfil los muestra.

@@ -1,10 +1,12 @@
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
+import '../security/password_hasher.dart';
+
 class AppDatabase {
   AppDatabase._();
 
-  static const schemaVersion = 2;
+  static const schemaVersion = 3;
 
   static Database? _db;
 
@@ -46,6 +48,31 @@ class AppDatabase {
         category TEXT NOT NULL
       )
     ''');
+    await _createSessionTable(db);
+  }
+
+  /// Una sola fila (`id = 1`) con el usuario que tiene la sesión abierta.
+  static Future<void> _createSessionTable(Database db) => db.execute('''
+      CREATE TABLE IF NOT EXISTS session (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        userId TEXT NOT NULL
+      )
+    ''');
+
+  /// Convierte a hash las contraseñas que aún están en texto plano.
+  static Future<void> _hashPlaintextPasswords(Database db) async {
+    const hasher = PasswordHasher();
+    final rows = await db.query('users', columns: ['id', 'password']);
+    for (final row in rows) {
+      final stored = row['password']! as String;
+      if (PasswordHasher.isHashed(stored)) continue;
+      await db.update(
+        'users',
+        {'password': hasher.hash(stored)},
+        where: 'id = ?',
+        whereArgs: [row['id']],
+      );
+    }
   }
 
   /// Migraciones incrementales: cada paso transforma el esquema conservando
@@ -62,8 +89,12 @@ class AppDatabase {
       await db.execute('DROP TABLE IF EXISTS users');
       await _createTables(db);
     }
+    if (oldVersion < 3) {
+      await _createSessionTable(db);
+      await _hashPlaintextPasswords(db);
+    }
     // Siguiente versión, por ejemplo:
-    // if (oldVersion < 3) {
+    // if (oldVersion < 4) {
     //   await db.execute('ALTER TABLE services ADD COLUMN ...');
     // }
   }

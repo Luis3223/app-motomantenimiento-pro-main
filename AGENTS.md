@@ -44,7 +44,7 @@ flutter test --plain-name "texto"    # un test por nombre
 bash tool/verify.sh                  # puerta de calidad: analyze + test
 ```
 
-Cuentas demo (sembradas en `Repository.tryPrepopulate`): `luis@gmail.com`/`123`, `honda@gmail.com`/`123`, `admin@casaracing.com`/`admin` (admin).
+Cuentas demo (solo en debug, sembradas en `Repository.tryPrepopulate`; las contraseñas se guardan con hash): `luis@gmail.com`/`123`, `honda@gmail.com`/`123`, `admin@casaracing.com`/`admin` (admin).
 
 ## Principios de código (obligatorios)
 
@@ -62,8 +62,8 @@ Todo código nuevo o modificado sigue **SOLID** y **DRY**. Si un cambio los viol
 
 Flujo de capas: `sqflite` → `Repository` → `AppController` (único `ChangeNotifier`) → pantallas vía `provider`.
 
-- **`lib/data/database/app_database.dart`**: singleton de SQLite (`users`, `services`). `schemaVersion` + `_migrate` incremental: las migraciones futuras deben usar `ALTER TABLE` y conservar datos; nunca `DROP TABLE`.
-- **`lib/data/repository.dart`**: acceso a datos y "reactividad" manual. No hay streams de sqflite: cada escritura llama a `_emitUsers` / `_emitAllServices`, que reemiten listas completas en `StreamController.broadcast` (incluidos los controllers por usuario de `watchServicesForUser`). Cualquier nueva operación de escritura debe reemitir igual. También contiene el estado simulado de "Firebase" (`firebaseStatus`, `triggerFirebaseSync`) y las notificaciones in-app en memoria.
+- **`lib/data/database/app_database.dart`**: singleton de SQLite (`users`, `services`, `session`, `service_types`). `schemaVersion` + `_migrate` incremental: las migraciones futuras deben usar `ALTER TABLE` y conservar datos; nunca `DROP TABLE`.
+- **`lib/data/repository.dart`**: acceso a datos y "reactividad" manual. No hay streams de sqflite: cada escritura llama a `_emitUsers` / `_emitAllServices`, que reemiten listas completas en `StreamController.broadcast` (incluidos los controllers por usuario de `watchServicesForUser`). Cualquier nueva operación de escritura debe reemitir igual. También gestiona el hash de contraseñas (`PasswordHasher`), la sesión persistente (`restoreSession`) y las notificaciones in-app en memoria. No hay sincronización en la nube.
 - **`lib/state/app_controller.dart`**: estado global (sesión, listas, servicio seleccionado, cálculo del ciclo de aceite de 30 días, alertas). Se suscribe a los streams del repositorio y hace `notifyListeners()`. Las alertas se deduplican con `_shownAlertTitles`. Los mensajes al usuario se publican en `feedbackMessage`; `MotoApp` (`lib/app.dart`) los escucha y los muestra como `SnackBar` mediante un `ScaffoldMessenger` global. El correo se normaliza (`trim().toLowerCase()`) en el controller.
 - **`lib/router/app_router.dart`**: `GoRouter` con `refreshListenable: controller`. El `redirect` gestiona auth (`/login`, `/register` ↔ `/garage`) y protege `/history/admin` para no admins. `StatefulShellRoute.indexedStack` con tres ramas (`/garage`, `/history`, `/profile`) y `MainShell` (barra inferior + `NotificationBanner`). Las pantallas de detalle no reciben parámetros por ruta: leen el estado del controller (p. ej. `selectService(s)` y luego navegar a `/history/service`). Aquí están también `openWhatsApp` / `openStore` y los canales reales de Casa Racing.
 - **`lib/theme/app_theme.dart`**: tema oscuro Material 3; los valores deben coincidir con `DESIGN.md`.

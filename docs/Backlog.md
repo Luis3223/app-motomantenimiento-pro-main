@@ -93,14 +93,17 @@ Leyenda de esfuerzo: **S** (< 1 h) · **M** (medio día) · **L** (1+ días)
 
 ## P3 — Seguridad (antes de producción)
 
-### 13. No guardar contraseñas en texto plano · M
+### 13. ✅ No guardar contraseñas en texto plano · M
+> **Hecho (2026-09-30):** `PasswordHasher` (PBKDF2-HMAC-SHA256, sal aleatoria de 16 bytes, 60 000 iteraciones, formato `pbkdf2$iter$sal$hash`, con prueba contra el vector RFC 7914). Migración v3 que convierte las contraseñas en texto plano. La migración no tiene test automático (requiere `sqflite_common_ffi`, tarea 18). 60 000 es menos de lo que recomienda OWASP (600 000) por el coste del Dart puro en móvil; súbelo cuando haya un backend o un paquete nativo.
 - Guardar un hash con sal (p. ej. `crypto` con PBKDF2, o `bcrypt`) en lugar de la contraseña.
 - Incluir una migración que convierta las contraseñas existentes.
 
-### 14. Retirar las cuentas demo en release · S
+### 14. ✅ Retirar las cuentas demo en release · S
+> **Hecho (2026-09-30):** `Repository(seedDemoData: kDebugMode)`; en release solo se siembran los tipos de servicio. Sin test automático (tarea 18).
 - Ejecutar `tryPrepopulate` solo en `kDebugMode`, o detrás de un flag de compilación. Las credenciales `admin` / `admin` no deben llegar a producción.
 
-### 15. Persistir la sesión · M
+### 15. ✅ Persistir la sesión · M
+> **Hecho (2026-09-30):** tabla `session` en SQLite (esquema v3) en lugar de `shared_preferences`, sin dependencia nueva; `Repository.restoreSession()` se llama en `AppController.init()`. Se borra al cerrar sesión o si la cuenta ya no existe.
 - Hoy se pierde la sesión al cerrar la app. Guardar solo el id o correo normalizado del usuario (p. ej. con `shared_preferences` o `flutter_secure_storage`), nunca la contraseña.
 - Restaurar el usuario desde SQLite durante `init()` y mantenerlo autenticado al volver a abrir la aplicación.
 - Borrar el identificador persistido únicamente cuando el usuario cierre sesión explícitamente.

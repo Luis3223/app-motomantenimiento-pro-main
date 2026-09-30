@@ -106,7 +106,13 @@ class FakeRepository extends Repository {
   }
 
   @override
-  void logout() => currentUser = null;
+  Future<void> logout() async => currentUser = null;
+
+  /// Usuario con sesión guardada al arrancar (simula el almacenamiento).
+  AppUser? savedSession;
+
+  @override
+  Future<AppUser?> restoreSession() async => currentUser = savedSession;
 
   @override
   Future<void> insertService(ServiceRecord service) async {
