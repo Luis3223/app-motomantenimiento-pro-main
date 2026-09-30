@@ -15,5 +15,5 @@
 - **Skills del proyecto:** `find-skills`, `grill-with-docs` (+ `grilling`, `domain-modeling`), `flutter-apply-architecture-best-practices`, `flutter-build-responsive-layout` y `flutter-fix-layout-issues`, fijadas en `skills-lock.json`.
 - **Dependencias:** paquetes de pub al día (`go_router` 18, `cupertino_icons` 2, `flutter_lints` 6 y el resto en su última versión compatible). El SDK mínimo pasa a Dart 3.12.
 - **Build Android:** el JDK ya no va en una ruta fija del repo; Gradle usa la variable de entorno `JAVA_HOME` de cada máquina.
-- **Build Android:** Gradle 9.3.1, Android Gradle Plugin 9.1.0 y Kotlin 2.4.0, las versiones de la plantilla de Flutter 3.47. Se mantienen `android.newDsl=false` y `android.builtInKotlin=false`.
+- **Build Android:** Gradle 9.3.1, Android Gradle Plugin 9.1.0 y Kotlin 2.4.0, las versiones de la plantilla de Flutter 3.47. Kotlin integrado (`android.builtInKotlin=true`) y el NDK que trae Flutter (`flutter.ndkVersion`). Se mantiene `android.newDsl=false`.
 - **Puerta de calidad en WSL:** `tool/verify.sh` llama a `flutter.bat` y `dart.bat` cuando corre bajo WSL, porque el `shared.sh` del SDK de Windows trae finales CRLF y bash aborta antes de analyze o test.
