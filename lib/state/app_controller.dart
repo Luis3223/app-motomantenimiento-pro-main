@@ -31,6 +31,9 @@ class AppController extends ChangeNotifier {
   String totalMileage = '0 km';
   String recentServiceCount = '00';
 
+  /// Títulos de alertas ya mostradas en la sesión, para no repetirlas.
+  final _shownAlertTitles = <String>{};
+
   StreamSubscription<List<AppUser>>? _usersSub;
   StreamSubscription<List<ServiceRecord>>? _allServicesSub;
   StreamSubscription<List<ServiceRecord>>? _userServicesSub;
@@ -156,7 +159,11 @@ class AppController extends ChangeNotifier {
         isDue = false;
         isWarning = remainingDays <= 5;
         statusText = 'Faltan $remainingDays días';
-        if (isWarning) {
+        if (!isWarning) {
+          // El aceite vuelve a estar al día: las alertas pueden repetirse
+          // cuando se acerque el siguiente vencimiento.
+          _shownAlertTitles.clear();
+        } else {
           _triggerSimulationAlert(
             'Alerta de Mantenimiento',
             'Faltan solo $remainingDays días para el próximo vencimiento de cambio de aceite.',
@@ -187,17 +194,24 @@ class AppController extends ChangeNotifier {
   }
 
   void _triggerSimulationAlert(String title, String message) {
-    if (showNotificationAlert == null ||
-        showNotificationAlert!.title != title) {
-      final alert = InAppNotification(
-        title: title,
-        message: message,
-        date: DateFormat('HH:mm').format(DateTime.now()),
-      );
-      showNotificationAlert = alert;
-      _repository.pushCustomNotification(title, message);
-      notifications = List.of(_repository.notifications);
-    }
+    if (!_shownAlertTitles.add(title)) return;
+    showNotificationAlert = InAppNotification(
+      title: title,
+      message: message,
+      date: DateFormat('HH:mm').format(DateTime.now()),
+    );
+    _repository.pushCustomNotification(title, message);
+    notifications = List.of(_repository.notifications);
+  }
+
+  static String _normalizeEmail(String email) => email.trim().toLowerCase();
+
+  static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
+  void _startSession() {
+    currentUser = _repository.currentUser;
+    _shownAlertTitles.clear();
+    _bindUserServices(currentUser!);
   }
 
   void dismissNotificationAlert() {
@@ -220,11 +234,10 @@ class AppController extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-    final success = await _repository.login(email.trim(), pass);
+    final success = await _repository.login(_normalizeEmail(email), pass);
     if (success) {
-      currentUser = _repository.currentUser;
+      _startSession();
       feedbackMessage = '¡Bienvenido de nuevo!';
-      _bindUserServices(currentUser!);
       notifyListeners();
       return true;
     }
@@ -245,10 +258,16 @@ class AppController extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+    final normalizedEmail = _normalizeEmail(email);
+    if (!_emailPattern.hasMatch(normalizedEmail)) {
+      feedbackMessage = 'Ingresa un correo electrónico válido.';
+      notifyListeners();
+      return false;
+    }
     final vin = 'YMA${100000 + Random().nextInt(900000)}CASARAC';
     final newUser = AppUser(
-      id: email.trim(),
-      email: email.trim(),
+      id: normalizedEmail,
+      email: normalizedEmail,
       password: pass,
       name: name.trim(),
       bikeModel: model.trim(),
@@ -259,9 +278,8 @@ class AppController extends ChangeNotifier {
     );
     final success = await _repository.register(newUser);
     if (success) {
-      currentUser = _repository.currentUser;
+      _startSession();
       feedbackMessage = '¡Registro exitoso en Casa Racing!';
-      _bindUserServices(currentUser!);
       notifyListeners();
       return true;
     }
@@ -342,6 +360,8 @@ class AppController extends ChangeNotifier {
     activeUserServices = [];
     oilChangeStatus = null;
     selectedService = null;
+    showNotificationAlert = null;
+    _shownAlertTitles.clear();
     notifyListeners();
   }
 

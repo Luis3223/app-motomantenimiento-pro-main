@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../state/app_controller.dart';
 import '../theme/app_theme.dart';
 import '../data/models/service_record.dart';
+import '../widgets/confirm_delete_service.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -208,7 +209,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           borderRadius: BorderRadius.circular(16),
           onTap: () {
             controller.selectService(record);
-            context.go('/garage/detail');
+            context.go('/history/service');
           },
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -326,7 +327,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         Icons.delete_outline,
                         color: AppColors.strongRed,
                       ),
-                      onPressed: () => controller.handleDeleteService(record),
+                      tooltip: 'Eliminar servicio',
+                      onPressed: () async {
+                        if (await confirmDeleteService(context, record)) {
+                          await controller.handleDeleteService(record);
+                        }
+                      },
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),

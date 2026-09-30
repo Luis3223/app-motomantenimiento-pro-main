@@ -14,6 +14,7 @@ import '../screens/login_screen.dart';
 import '../screens/manage_service_types_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/register_screen.dart';
+import '../screens/service_detail_screen.dart';
 import '../screens/settings_screen.dart';
 import '../widgets/notification_banner.dart';
 
@@ -45,6 +46,10 @@ GoRouter createAppRouter(AppController controller) {
       if (!controller.ready) return null;
       if (!loggedIn && !onAuth) return '/login';
       if (loggedIn && onAuth) return '/garage';
+      if (loc.startsWith('/history/admin') &&
+          controller.currentUser?.isAdmin != true) {
+        return '/history';
+      }
       return null;
     },
     routes: [
@@ -82,6 +87,10 @@ GoRouter createAppRouter(AppController controller) {
                   GoRoute(
                     path: 'add',
                     builder: (context, state) => AddRegistryScreen(),
+                  ),
+                  GoRoute(
+                    path: 'service',
+                    builder: (context, state) => ServiceDetailScreen(),
                   ),
                   GoRoute(
                     path: 'admin',

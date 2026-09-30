@@ -7,7 +7,7 @@
 - **Notificaciones:** campana en el Dashboard con el historial de avisos; ya no se duplican.
 - **Cuentas:** el correo no distingue mayúsculas y se valida su formato al registrarse.
 - **Datos:** ya no se pierden actualizaciones del historial durante la carga inicial.
-- **Tests:** 10 tests nuevos (router, controller, pantallas).
+- **Tests:** 11 tests nuevos (router, controller, pantallas) y un `FakeRepository` en memoria para los tests.
 - **Docs:** nuevos `Backlog.md` y `Changenotes.md`; la carpeta pasa a llamarse `docs/`.
 - **Gobernanza de agentes:** `AGENTS.md` como fuente única de reglas para Claude Code y Cursor (`CLAUDE.md` solo lo importa). Incluye SOLID/DRY obligatorios, la definición de terminado, el flujo git con confirmación humana antes de cada commit o push, y la política para instalar skills.
 - **Arquitectura:** ADR `docs/adr/0001` que fija la migración incremental a MVVM, más las tareas 22 (MVVM) y 23 (`very_good_analysis`) en el backlog.

@@ -6,6 +6,7 @@ import '../state/app_controller.dart';
 import '../theme/app_theme.dart';
 import '../router/app_router.dart';
 import '../data/models/oil_status.dart';
+import '../widgets/notifications_sheet.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -145,6 +146,16 @@ class DashboardScreen extends StatelessWidget {
                             ),
                           ],
                         ),
+                      ),
+                      IconButton(
+                        tooltip: 'Notificaciones',
+                        icon: Icon(
+                          Icons.notifications_outlined,
+                          color: context.textPrimary,
+                          size: 28,
+                        ),
+                        onPressed: () =>
+                            showNotificationsSheet(context, c.notifications),
                       ),
                     ],
                   ),

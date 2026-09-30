@@ -80,21 +80,25 @@ class Repository {
       () => StreamController<List<ServiceRecord>>.broadcast(),
     );
     return Stream.multi((listener) async {
-      final initial = await getServicesForUser(userId);
-      listener.add(initial);
-      final sub = controller.stream.listen(
-        listener.add,
-        onError: listener.addError,
-      );
+      // Suscribirse antes de la consulta inicial para no perder eventos
+      // emitidos mientras se carga. Si llega uno en vivo antes, es más
+      // reciente que el resultado inicial y este se descarta.
+      var receivedLive = false;
+      final sub = controller.stream.listen((services) {
+        receivedLive = true;
+        listener.add(services);
+      }, onError: listener.addError);
       listener.onCancel = sub.cancel;
+      final initial = await getServicesForUser(userId);
+      if (!receivedLive) listener.add(initial);
     });
   }
 
   Future<AppUser?> getUserByEmail(String email) async {
     final rows = await db.query(
       'users',
-      where: 'email = ?',
-      whereArgs: [email],
+      where: 'LOWER(email) = ?',
+      whereArgs: [email.trim().toLowerCase()],
       limit: 1,
     );
     if (rows.isEmpty) return null;
