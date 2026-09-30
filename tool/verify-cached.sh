@@ -7,6 +7,8 @@
 #   3 — verify sigue fallando y el hash no cambió (evita bucles en hooks)
 set -euo pipefail
 cd "$(dirname "$0")/.."
+# shellcheck source=wsl-flutter.sh
+source "$(dirname "$0")/wsl-flutter.sh"
 
 CACHE_DIR=".dart_tool/verify"
 LOG="$CACHE_DIR/output.log"

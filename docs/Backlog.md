@@ -85,12 +85,6 @@ Leyenda de esfuerzo: **S** (< 1 h) · **M** (medio día) · **L** (1+ días)
 ### 12. Validar el kilometraje al registrar un servicio · S
 - Rechazar valores negativos y avisar si el km es menor que el de un servicio anterior con fecha más antigua.
 
-### 24. Actualizar el logo de la app · M
-- **Problema:** la app usa el icono por defecto de Flutter y no tiene splash propio.
-- **Tarea:** actualizar la imagen del logo en el icono del launcher (incluido el icono adaptativo de Android) y en el splash, idealmente generándolos con `flutter_launcher_icons` y `flutter_native_splash` para no editarlos a mano en `android/`.
-- **Bloqueo:** requiere el logo oficial. Hoy el repo no tiene assets de marca y `PRODUCT.md` prohíbe inventar material de Casa Racing.
-- **Criterio de aceptación:** el icono del launcher y el splash muestran el logo oficial en Android.
-
 ---
 
 ## P3 — Seguridad (antes de producción)
@@ -161,3 +155,6 @@ Leyenda de esfuerzo: **S** (< 1 h) · **M** (medio día) · **L** (1+ días)
   2. Contar los avisos por regla y desactivar temporalmente en `analysis_options.yaml` las reglas que hoy fallan, con un comentario `# TODO(backlog-23)`.
   3. Reactivar las reglas por lotes pequeños, corrigiendo el código en cada lote (idealmente junto con la migración de la tarea 22).
 - **Criterio de aceptación:** no queda ninguna regla desactivada con `TODO(backlog-23)` y `flutter analyze` sigue sin avisos.
+
+## Por Agregar
+- Usar una API o registrar de forma manual datos de moto, las fichas tecnicas, manuales de servicio, configuraciones, alertas, y otros datos relevantes, cada cuanto se debe cambiar el aceite.

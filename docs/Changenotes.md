@@ -14,3 +14,6 @@
 - **Puerta de calidad:** `tool/verify.sh` (analyze + test) se ejecuta automáticamente al final de cada turno de Claude Code y de Cursor, y en CI con GitHub Actions en cada PR y cada push a `main`. Todo el código queda formateado con `dart format`.
 - **Skills del proyecto:** `find-skills`, `grill-with-docs` (+ `grilling`, `domain-modeling`), `flutter-apply-architecture-best-practices`, `flutter-build-responsive-layout` y `flutter-fix-layout-issues`, fijadas en `skills-lock.json`.
 - **Dependencias:** paquetes de pub al día (`go_router` 18, `cupertino_icons` 2, `flutter_lints` 6 y el resto en su última versión compatible). El SDK mínimo pasa a Dart 3.12.
+- **Build Android:** el JDK ya no va en una ruta fija del repo; Gradle usa la variable de entorno `JAVA_HOME` de cada máquina.
+- **Build Android:** Gradle 9.3.1, Android Gradle Plugin 9.1.0 y Kotlin 2.4.0, las versiones de la plantilla de Flutter 3.47. Se mantienen `android.newDsl=false` y `android.builtInKotlin=false`.
+- **Puerta de calidad en WSL:** `tool/verify.sh` llama a `flutter.bat` y `dart.bat` cuando corre bajo WSL, porque el `shared.sh` del SDK de Windows trae finales CRLF y bash aborta antes de analyze o test.
