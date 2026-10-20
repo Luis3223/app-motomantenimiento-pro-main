@@ -1,5 +1,9 @@
 # Changenotes
 
+## [*0.0.4*] 2026-10-20
+- **Seguridad:** el recuadro con las credenciales demo del login solo se muestra en debug; en release no aparece. Las cuentas demo ya solo se sembraban en debug (0.0.3), así que la pantalla ya no promete accesos que no existen.
+- **Tests:** 2 tests de widget nuevos en `test/login_screen_test.dart` (el recuadro se muestra en debug y se oculta en release).
+
 ## [*0.0.3*] 2026-09-30
 - **Seguridad:** las contraseñas se guardan con hash PBKDF2-SHA256 y sal; las cuentas existentes se convierten al actualizar (esquema v3).
 - **Seguridad:** las cuentas demo (`admin` / `admin`, etc.) solo se crean en debug; en release no existen.

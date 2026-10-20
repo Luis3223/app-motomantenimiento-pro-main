@@ -100,6 +100,7 @@ Leyenda de esfuerzo: **S** (< 1 h) · **M** (medio día) · **L** (1+ días)
 
 ### 14. ✅ Retirar las cuentas demo en release · S
 > **Hecho (2026-09-30):** `Repository(seedDemoData: kDebugMode)`; en release solo se siembran los tipos de servicio. Sin test automático (tarea 18).
+> **Hecho (2026-10-20):** el recuadro de credenciales del login solo se muestra en debug (`LoginScreen.showDemoCredentials`, por defecto `kDebugMode`); en release no aparece. Tests en `test/login_screen_test.dart`.
 - Ejecutar `tryPrepopulate` solo en `kDebugMode`, o detrás de un flag de compilación. Las credenciales `admin` / `admin` no deben llegar a producción.
 
 ### 15. ✅ Persistir la sesión · M

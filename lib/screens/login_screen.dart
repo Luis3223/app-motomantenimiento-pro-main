@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -6,7 +7,11 @@ import '../state/app_controller.dart';
 import '../theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.showDemoCredentials = kDebugMode});
+
+  /// Muestra el recuadro con las cuentas demo. Solo en debug por defecto: en
+  /// release esas cuentas ni siquiera se siembran (ver `Repository.init`).
+  final bool showDemoCredentials;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -360,76 +365,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
 
-                      const SizedBox(height: 30),
-
-                      // Demo Credentials
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 16,
-                          horizontal: 16,
-                        ),
-                        decoration: BoxDecoration(
-                          color: context.cardColor, // Dark blueish black
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: context.dividerColor),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Icon(
-                                    Icons.email_outlined,
-                                    color: AppColors.strongRed,
-                                    size: 16,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      'Demo: luis@gmail.com\n/ 123',
-                                      style: TextStyle(
-                                        color: context.textSecondary,
-                                        fontSize: 10,
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              width: 1,
-                              height: 30,
-                              color: context.dividerColor,
-                              margin: const EdgeInsets.symmetric(horizontal: 8),
-                            ),
-                            Expanded(
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Icon(
-                                    Icons.person_outline,
-                                    color: AppColors.strongRed,
-                                    size: 16,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      'Admin: admin@casaracing.com\n/ admin',
-                                      style: TextStyle(
-                                        color: context.textSecondary,
-                                        fontSize: 10,
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      if (widget.showDemoCredentials) ...[
+                        const SizedBox(height: 30),
+                        const _DemoCredentialsCard(),
+                      ],
 
                       const SizedBox(height: 40),
 
@@ -543,6 +482,74 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Recuadro con las cuentas demo. Solo se muestra en builds de debug, donde
+/// `Repository` sí siembra esas cuentas.
+class _DemoCredentialsCard extends StatelessWidget {
+  const _DemoCredentialsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+      decoration: BoxDecoration(
+        color: context.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.dividerColor),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _DemoCredentialEntry(
+              icon: Icons.email_outlined,
+              label: 'Demo: luis@gmail.com\n/ 123',
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 30,
+            color: context.dividerColor,
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+          ),
+          Expanded(
+            child: _DemoCredentialEntry(
+              icon: Icons.person_outline,
+              label: 'Admin: admin@casaracing.com\n/ admin',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DemoCredentialEntry extends StatelessWidget {
+  const _DemoCredentialEntry({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: AppColors.strongRed, size: 16),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: context.textSecondary,
+              fontSize: 10,
+              height: 1.4,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
