@@ -8,12 +8,14 @@ import '../data/models/oil_status.dart';
 import '../data/models/service_record.dart';
 import '../data/models/user.dart';
 import '../data/repository.dart';
+import '../domain/session_sync.dart';
 
 class AppController extends ChangeNotifier {
-  AppController({Repository? repository})
+  AppController({Repository? repository, this.sessionSync})
     : _repository = repository ?? Repository();
 
   final Repository _repository;
+  final SessionSync? sessionSync;
 
   bool ready = false;
   AppUser? currentUser;
@@ -71,6 +73,8 @@ class AppController extends ChangeNotifier {
       activeUserServices = services;
       _updateDashboardCalculations(user, services);
       notifyListeners();
+      final sync = sessionSync;
+      if (sync != null) unawaited(sync.onServicesChanged(services));
     });
   }
 
@@ -230,9 +234,11 @@ class AppController extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-    final success = await _repository.login(_normalizeEmail(email), pass);
+    final normalized = _normalizeEmail(email);
+    final success = await _repository.login(normalized, pass);
     if (success) {
       _startSession();
+      unawaited(sessionSync?.linkAccount(email: normalized, password: pass));
       feedbackMessage = '¡Bienvenido de nuevo!';
       notifyListeners();
       return true;
@@ -276,6 +282,9 @@ class AppController extends ChangeNotifier {
     final success = await _repository.register(newUser);
     if (success) {
       _startSession();
+      unawaited(
+        sessionSync?.linkAccount(email: normalizedEmail, password: pass),
+      );
       feedbackMessage = '¡Registro exitoso en Casa Racing!';
       notifyListeners();
       return true;
@@ -364,6 +373,7 @@ class AppController extends ChangeNotifier {
   }
 
   void handleLogout() {
+    unawaited(sessionSync?.signOut());
     unawaited(_repository.logout());
     _userServicesSub?.cancel();
     currentUser = null;
@@ -375,15 +385,19 @@ class AppController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void adminPushNotification(String title, String message) {
-    _repository.pushCustomNotification(title, message);
+  void showFeedback(String message) {
+    feedbackMessage = message;
+    notifyListeners();
+  }
+
+  void presentIncomingNotification(String title, String message) {
     showNotificationAlert = InAppNotification(
       title: title,
       message: message,
       date: DateFormat('HH:mm').format(DateTime.now()),
     );
+    _repository.pushCustomNotification(title, message);
     notifications = List.of(_repository.notifications);
-    feedbackMessage = 'Aviso creado en este dispositivo.';
     notifyListeners();
   }
 

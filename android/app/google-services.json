@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "903873743770",
+    "project_id": "motomantenimiento-pro",
+    "storage_bucket": "motomantenimiento-pro.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:903873743770:android:23d97cbab057e713c84823",
+        "android_client_info": {
+          "package_name": "com.aistudio.motomantenimiento.pkmvqw"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC325vSyvavSBwjlWYf-3X7C6D0LGdfiNQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

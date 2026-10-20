@@ -109,20 +109,24 @@ Leyenda de esfuerzo: **S** (< 1 h) · **M** (medio día) · **L** (1+ días)
 - Borrar el identificador persistido únicamente cuando el usuario cierre sesión explícitamente.
 - Eliminar la sesión guardada si el usuario ya no existe o sus datos no son válidos.
 
-### 16. Notificaciones push · L
-- Integrar Firebase Cloud Messaging (FCM) o el proveedor que se defina para enviar recordatorios de mantenimiento y avisos del administrador aunque la app esté cerrada.
+### 16. ✅ Notificaciones push · L
+> **Hecho (2026-10-20):** app Android en Firebase `motomantenimiento-pro`; en Supabase, `profiles`, `notifications`, la función `push` y un cron a las 08:00 America/Bogota. El admin envía a los dispositivos con token. El payload solo lleva título, mensaje y ruta. Falta el secreto `FCM_SERVICE_ACCOUNT` en la función (cuenta de servicio de Firebase) y, en Auth de Supabase, desactivar la confirmación de correo y bajar la longitud mínima de contraseña a 3 para las cuentas demo. La entrega con la app cerrada no se probó en un teléfono.
+
+- Integrar Firebase Cloud Messaging (FCM) para enviar recordatorios de mantenimiento y avisos del administrador aunque la app esté cerrada.
 - Gestionar permisos, registro y renovación de tokens, recepción en primer plano y navegación al contenido relacionado al tocar una notificación.
-- Requiere backend real, autenticación de dispositivos y control para no enviar datos sensibles en el payload.
+- El payload lleva título y un identificador de navegación; no kilometraje, VIN ni otros datos sensibles.
 
 ---
 
 ## P4 — Backend real (épica)
 
 ### 17. Sincronización real · L
-- Definir el backend (Firebase Auth + Firestore/RTDB, Supabase, u otro).
-- Autenticación real que reemplace la tabla local `users`.
-- Sincronización offline-first: SQLite como caché local, con cola de cambios pendientes.
+> **Decisión (2026-10-20):** el backend es Supabase. Ver `docs/adr/0002-supabase-como-backend.md`. La implementación sigue pendiente.
+
+- Autenticación con Supabase Auth, que reemplaza la tabla local `users`.
+- Postgres con RLS como fuente de verdad; SQLite como caché local, con cola de cambios pendientes (offline-first).
 - Panel de admin con datos de todos los clientes, no solo los del dispositivo.
+- Las notificaciones push de Android siguen saliendo por FCM (tarea 16).
 
 ### 18. Recordatorios locales programados · M
 - Mientras no haya backend, usar `flutter_local_notifications` para avisar 5 días antes y el día del vencimiento del cambio de aceite, aunque la app esté cerrada.
@@ -144,12 +148,12 @@ Leyenda de esfuerzo: **S** (< 1 h) · **M** (medio día) · **L** (1+ días)
 ### 25. Registro y acceso con Google · M
 - Añadir registro e inicio de sesión con Google.
 - Vincular la cuenta social con el usuario local existente sin duplicar cuentas por correo normalizado.
-- Requiere autenticación real y backend; no debe implementarse como una simulación local.
+- La autenticación es Supabase Auth (ADR 0002). No debe implementarse como una simulación local.
 
 ### 26. Recuperación y reenvío de contraseña · M
 - Permitir solicitar el reenvío o restablecimiento de contraseña desde la pantalla de login.
 - Mostrar estados claros para correo enviado, cuenta no encontrada y solicitud inválida.
-- Requiere autenticación real y un servicio de correo; no exponer contraseñas almacenadas.
+- El restablecimiento sale de Supabase Auth (ADR 0002); no exponer contraseñas almacenadas.
 
 ### 27. Preparación para publicación en Google Play · L
 - Configurar identificador, firma, versión, icono, permisos, política de privacidad y ficha de la aplicación.

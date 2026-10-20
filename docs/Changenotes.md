@@ -1,5 +1,9 @@
 # Changenotes
 
+## [proyecto] 2026-10-20
+- **Backend:** se cierra la elección de la tarea 17. El backend es Supabase (Auth, Postgres con RLS y Edge Functions). El push en Android sigue por FCM. ADR `docs/adr/0002-supabase-como-backend.md`.
+- **Push:** el aviso del admin y el recordatorio de aceite (5 días antes y el día del vencimiento) salen por FCM. Supabase guarda el token y la función `push` envía título y ruta, sin datos de la moto.
+
 ## [*0.0.3*] 2026-09-30
 - **Seguridad:** las contraseñas se guardan con hash PBKDF2-SHA256 y sal; las cuentas existentes se convierten al actualizar (esquema v3).
 - **Seguridad:** las cuentas demo (`admin` / `admin`, etc.) solo se crean en debug; en release no existen.

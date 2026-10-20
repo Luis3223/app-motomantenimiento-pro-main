@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../data/push/push_coordinator.dart';
 import '../state/app_controller.dart';
 import '../theme/app_theme.dart';
 
@@ -40,7 +41,7 @@ class _AdminScreenState extends State<AdminScreen> {
         padding: EdgeInsets.all(16),
         children: [
           Text(
-            'Avisos en este dispositivo',
+            'Avisos a los dispositivos registrados',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
           ),
           SizedBox(height: 8),
@@ -56,13 +57,22 @@ class _AdminScreenState extends State<AdminScreen> {
           ),
           SizedBox(height: 12),
           ElevatedButton(
-            onPressed: () {
-              if (_title.text.trim().isEmpty || _message.text.trim().isEmpty) {
-                return;
+            onPressed: () async {
+              final title = _title.text.trim();
+              final body = _message.text.trim();
+              if (title.isEmpty || body.isEmpty) return;
+              final push = context.read<PushCoordinator>();
+              final ok = await push.sendAdminAlert(title: title, body: body);
+              if (!mounted) return;
+              c.showFeedback(
+                ok
+                    ? 'Aviso enviado a los dispositivos registrados.'
+                    : 'No se pudo enviar el aviso. Inténtalo de nuevo.',
+              );
+              if (ok) {
+                _title.clear();
+                _message.clear();
               }
-              c.adminPushNotification(_title.text.trim(), _message.text.trim());
-              _title.clear();
-              _message.clear();
             },
             child: Text('Enviar alerta'),
           ),
