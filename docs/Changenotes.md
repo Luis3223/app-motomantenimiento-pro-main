@@ -1,5 +1,9 @@
 # Changenotes
 
+## [proyecto] 2026-10-20
+- **Backend:** se cierra la elección de la tarea 17. El backend es Supabase (Auth, Postgres con RLS y Edge Functions). El push en Android sigue por FCM. ADR `docs/adr/0002-supabase-como-backend.md`.
+- **Push:** el aviso del admin y el recordatorio de aceite (5 días antes y el día del vencimiento) salen por FCM. Supabase guarda el token y la función `push` envía título y ruta, sin datos de la moto.
+
 ## [*0.0.4*] 2026-10-20
 - **Seguridad:** el recuadro con las credenciales demo del login solo se muestra en debug; en release no aparece. Las cuentas demo ya solo se sembraban en debug (0.0.3), así que la pantalla ya no promete accesos que no existen.
 - **Tests:** 2 tests de widget nuevos en `test/login_screen_test.dart` (el recuadro se muestra en debug y se oculta en release).

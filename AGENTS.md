@@ -113,5 +113,5 @@ Una skill se ejecuta con todos los permisos del agente. Antes de instalarla:
 
 ## Restricciones de producto
 
-- No hay backend: los mensajes de sincronización con "Firebase" en la UI son simulados. No añadas copy que prometa sincronización en la nube real ni inventes testimonios, certificaciones o assets de Casa Racing.
+- El backend elegido es Supabase (`docs/adr/0002-supabase-como-backend.md`). Los avisos push ya usan Supabase y FCM (tarea 16). El historial sigue solo en el dispositivo (tarea 17). No añadas copy que prometa sincronización del historial en la nube ni inventes testimonios, certificaciones o assets de Casa Racing. No abras otra opción de backend (Firebase Auth, Firestore u otro) sin una decisión nueva.
 - La regla de 30 días del aceite y los canales (WhatsApp, URL de tienda) no están confirmados como definitivos; no los cambies sin indicación.

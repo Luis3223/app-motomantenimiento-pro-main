@@ -43,7 +43,7 @@ Abiertos / no inventar:
 
 - Si el ciclo de 30 días es la regla de negocio definitiva de Casa Racing o una aproximación al manual del fabricante.
 - Si el número de WhatsApp y la URL de tienda son los canales de producción finales.
-- Backend real, push y sync offline-first (previsto en backlog, no desplegado).
+- El backend elegido es Supabase (ADR 0002). Los avisos push están cableados (FCM + Supabase); la sincronización del historial sigue pendiente.
 - Accesibilidad y requisitos de inclusión específicos del negocio: no establecidos.
 
 ## Brand Commitments
