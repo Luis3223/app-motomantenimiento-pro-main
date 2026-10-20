@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../data/demo_accounts.dart';
 import '../state/app_controller.dart';
 import '../theme/app_theme.dart';
 
@@ -505,7 +506,7 @@ class _DemoCredentialsCard extends StatelessWidget {
           Expanded(
             child: _DemoCredentialEntry(
               icon: Icons.email_outlined,
-              label: 'Demo: luis@gmail.com\n/ 123',
+              label: 'Demo: luis@gmail.com\n/ $demoPassword',
             ),
           ),
           Container(
@@ -517,7 +518,7 @@ class _DemoCredentialsCard extends StatelessWidget {
           Expanded(
             child: _DemoCredentialEntry(
               icon: Icons.person_outline,
-              label: 'Admin: admin@casaracing.com\n/ admin',
+              label: 'Admin: admin@casaracing.com\n/ $demoPassword',
             ),
           ),
         ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:motomantenimiento_pro/data/demo_accounts.dart';
 import 'package:motomantenimiento_pro/screens/login_screen.dart';
 import 'package:motomantenimiento_pro/state/app_controller.dart';
 import 'package:motomantenimiento_pro/theme/app_theme.dart';
@@ -30,8 +31,11 @@ void main() {
   ) async {
     await _pumpLogin(tester, showDemoCredentials: true);
 
-    expect(find.text('Demo: luis@gmail.com\n/ 123'), findsOneWidget);
-    expect(find.text('Admin: admin@casaracing.com\n/ admin'), findsOneWidget);
+    expect(find.text('Demo: luis@gmail.com\n/ $demoPassword'), findsOneWidget);
+    expect(
+      find.text('Admin: admin@casaracing.com\n/ $demoPassword'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('el login de release no filtra credenciales demo', (
@@ -39,7 +43,10 @@ void main() {
   ) async {
     await _pumpLogin(tester, showDemoCredentials: false);
 
-    expect(find.text('Demo: luis@gmail.com\n/ 123'), findsNothing);
-    expect(find.text('Admin: admin@casaracing.com\n/ admin'), findsNothing);
+    expect(find.text('Demo: luis@gmail.com\n/ $demoPassword'), findsNothing);
+    expect(
+      find.text('Admin: admin@casaracing.com\n/ $demoPassword'),
+      findsNothing,
+    );
   });
 }

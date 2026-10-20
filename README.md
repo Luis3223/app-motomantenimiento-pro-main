@@ -39,9 +39,9 @@ flutter build apk --debug
 
 | Email | Password | Rol |
 |-------|----------|-----|
-| `luis@gmail.com` | `123` | usuario |
-| `honda@gmail.com` | `123` | usuario |
-| `admin@casaracing.com` | `admin` | admin |
+| `luis@gmail.com` | `123456` | usuario |
+| `honda@gmail.com` | `123456` | usuario |
+| `admin@casaracing.com` | `123456` | admin |
 
 ## Stack
 

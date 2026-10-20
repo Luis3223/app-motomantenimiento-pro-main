@@ -44,7 +44,7 @@ flutter test --plain-name "texto"    # un test por nombre
 bash tool/verify.sh                  # puerta de calidad: analyze + test
 ```
 
-Cuentas demo (solo en debug, sembradas en `Repository.tryPrepopulate`; las contraseñas se guardan con hash): `luis@gmail.com`/`123`, `honda@gmail.com`/`123`, `admin@casaracing.com`/`admin` (admin).
+Cuentas demo (solo en debug, sembradas en `Repository.tryPrepopulate`; las contraseñas se guardan con hash): `luis@gmail.com`/`123456`, `honda@gmail.com`/`123456`, `admin@casaracing.com`/`123456` (admin).
 
 ## Principios de código (obligatorios)
 

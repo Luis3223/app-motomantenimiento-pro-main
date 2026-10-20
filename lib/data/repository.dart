@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'database/app_database.dart';
+import 'demo_accounts.dart';
 import 'models/oil_status.dart';
 import 'models/service_record.dart';
 import 'models/user.dart';
@@ -206,7 +207,10 @@ class Repository {
 
   Future<void> tryPrepopulate() async {
     await _seedServiceTypes();
-    if (seedDemoData) await _seedDemoData();
+    if (seedDemoData) {
+      await _seedDemoData();
+      await _refreshDemoPasswords();
+    }
   }
 
   Future<void> _insertDemoUser(AppUser user) =>
@@ -239,7 +243,7 @@ class Repository {
       const AppUser(
         id: 'luis@gmail.com',
         email: 'luis@gmail.com',
-        password: '123',
+        password: demoPassword,
         name: 'Luis Angel Olivera',
         bikeModel: 'Yamaha MT-07',
         bikePlate: 'ABC-123',
@@ -252,7 +256,7 @@ class Repository {
       const AppUser(
         id: 'honda@gmail.com',
         email: 'honda@gmail.com',
-        password: '123',
+        password: demoPassword,
         name: 'Carlos Africa',
         bikeModel: 'Honda Africa Twin',
         bikePlate: 'XYZ-789',
@@ -265,7 +269,7 @@ class Repository {
       const AppUser(
         id: 'admin@casaracing.com',
         email: 'admin@casaracing.com',
-        password: 'admin',
+        password: demoPassword,
         name: 'Casa Racing Admin',
         bikeModel: 'KTM 390 Duke',
         bikePlate: 'QWE-456',
@@ -347,6 +351,27 @@ class Repository {
     );
 
     await _emitAllServices();
+  }
+
+  /// Instalaciones debug que ya tenían `123` o `admin` pasan a [demoPassword].
+  Future<void> _refreshDemoPasswords() async {
+    const previous = {
+      'luis@gmail.com': '123',
+      'honda@gmail.com': '123',
+      'admin@casaracing.com': 'admin',
+    };
+    for (final entry in previous.entries) {
+      final user = await getUserByEmail(entry.key);
+      if (user == null || !_hasher.verify(entry.value, user.password)) {
+        continue;
+      }
+      await db.update(
+        'users',
+        {'password': _hasher.hash(demoPassword)},
+        where: 'id = ?',
+        whereArgs: [user.id],
+      );
+    }
   }
 
   Future<bool> login(String email, String password) async {

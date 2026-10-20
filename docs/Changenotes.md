@@ -3,6 +3,7 @@
 ## [proyecto] 2026-10-20
 - **Backend:** se cierra la elección de la tarea 17. El backend es Supabase (Auth, Postgres con RLS y Edge Functions). El push en Android sigue por FCM. ADR `docs/adr/0002-supabase-como-backend.md`.
 - **Push:** el aviso del admin y el recordatorio de aceite (5 días antes y el día del vencimiento) salen por FCM. Supabase guarda el token y la función `push` envía título y ruta, sin datos de la moto.
+- **Cuentas demo:** la contraseña pasa a `123456` en las tres cuentas, para poder enlazarlas con Supabase Auth. Una instalación debug que aún tenga `123` o `admin` se actualiza al abrir la app.
 
 ## [*0.0.4*] 2026-10-20
 - **Seguridad:** el recuadro con las credenciales demo del login solo se muestra en debug; en release no aparece. Las cuentas demo ya solo se sembraban en debug (0.0.3), así que la pantalla ya no promete accesos que no existen.

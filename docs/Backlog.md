@@ -111,7 +111,7 @@ Leyenda de esfuerzo: **S** (< 1 h) · **M** (medio día) · **L** (1+ días)
 - Eliminar la sesión guardada si el usuario ya no existe o sus datos no son válidos.
 
 ### 16. ✅ Notificaciones push · L
-> **Hecho (2026-10-20):** app Android en Firebase `motomantenimiento-pro`; en Supabase, `profiles`, `notifications`, la función `push` y un cron a las 08:00 America/Bogota. El admin envía a los dispositivos con token. El payload solo lleva título, mensaje y ruta. Falta el secreto `FCM_SERVICE_ACCOUNT` en la función (cuenta de servicio de Firebase) y, en Auth de Supabase, desactivar la confirmación de correo y bajar la longitud mínima de contraseña a 3 para las cuentas demo. La entrega con la app cerrada no se probó en un teléfono.
+> **Hecho (2026-10-20):** app Android en Firebase `motomantenimiento-pro`; en Supabase, `profiles`, `notifications`, la función `push` y un cron a las 08:00 America/Bogota. El admin envía a los dispositivos con token. El payload solo lleva título, mensaje y ruta. Falta el secreto `FCM_SERVICE_ACCOUNT` en la función (cuenta de servicio de Firebase) y, en Auth de Supabase, desactivar la confirmación de correo. Las cuentas demo usan `123456`. La entrega con la app cerrada no se probó en un teléfono.
 
 - Integrar Firebase Cloud Messaging (FCM) para enviar recordatorios de mantenimiento y avisos del administrador aunque la app esté cerrada.
 - Gestionar permisos, registro y renovación de tokens, recepción en primer plano y navegación al contenido relacionado al tocar una notificación.
