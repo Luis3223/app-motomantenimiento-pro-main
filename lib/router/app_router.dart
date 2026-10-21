@@ -53,7 +53,7 @@ GoRouter createAppRouter(AppController controller) {
       return null;
     },
     routes: [
-      GoRoute(path: '/login', builder: (context, state) => LoginScreen()),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/register', builder: (context, state) => RegisterScreen()),
       GoRoute(
         path: '/manage-services',

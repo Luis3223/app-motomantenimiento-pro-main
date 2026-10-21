@@ -8,45 +8,20 @@ import 'package:provider/provider.dart';
 
 import 'support/fake_repository.dart';
 
-Future<void> _pumpLogin(
-  WidgetTester tester, {
-  required bool showDemoCredentials,
-}) async {
-  final controller = AppController(repository: FakeRepository());
-  await tester.pumpWidget(
-    ChangeNotifierProvider.value(
-      value: controller,
-      child: MaterialApp(
-        theme: buildAppTheme(),
-        home: LoginScreen(showDemoCredentials: showDemoCredentials),
-      ),
-    ),
-  );
-  await tester.pump();
-}
-
 void main() {
-  testWidgets('el login muestra las cuentas demo cuando se piden', (
-    tester,
-  ) async {
-    await _pumpLogin(tester, showDemoCredentials: true);
-
-    expect(find.text('Demo: luis@gmail.com\n/ $demoPassword'), findsOneWidget);
-    expect(
-      find.text('Admin: admin@casaracing.com\n/ $demoPassword'),
-      findsOneWidget,
+  testWidgets('el login no muestra credenciales demo', (tester) async {
+    final controller = AppController(repository: FakeRepository());
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: controller,
+        child: MaterialApp(theme: buildAppTheme(), home: const LoginScreen()),
+      ),
     );
-  });
+    await tester.pump();
 
-  testWidgets('el login de release no filtra credenciales demo', (
-    tester,
-  ) async {
-    await _pumpLogin(tester, showDemoCredentials: false);
-
-    expect(find.text('Demo: luis@gmail.com\n/ $demoPassword'), findsNothing);
-    expect(
-      find.text('Admin: admin@casaracing.com\n/ $demoPassword'),
-      findsNothing,
-    );
+    expect(find.text('Iniciar sesión'), findsOneWidget);
+    expect(find.textContaining('luis@gmail.com'), findsNothing);
+    expect(find.textContaining('admin@casaracing.com'), findsNothing);
+    expect(find.textContaining(demoPassword), findsNothing);
   });
 }

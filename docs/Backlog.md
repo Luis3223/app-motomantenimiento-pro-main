@@ -101,6 +101,7 @@ Leyenda de esfuerzo: **S** (< 1 h) · **M** (medio día) · **L** (1+ días)
 ### 14. ✅ Retirar las cuentas demo en release · S
 > **Hecho (2026-09-30):** `Repository(seedDemoData: kDebugMode)`; en release solo se siembran los tipos de servicio. Sin test automático (requiere `sqflite_common_ffi`).
 > **Hecho (2026-10-20):** el recuadro de credenciales del login solo se muestra en debug (`LoginScreen.showDemoCredentials`, por defecto `kDebugMode`); en release no aparece. Tests en `test/login_screen_test.dart`.
+> **Hecho (2026-10-21):** el login ya no muestra el recuadro de credenciales demo en ningún build (se retiró `LoginScreen.showDemoCredentials`). Las cuentas siguen sembrándose solo en debug. Test de regresión en `test/login_screen_test.dart`.
 - Ejecutar `tryPrepopulate` solo en `kDebugMode`, o detrás de un flag de compilación. Las credenciales `admin` / `admin` no deben llegar a producción.
 
 ### 15. ✅ Persistir la sesión · M

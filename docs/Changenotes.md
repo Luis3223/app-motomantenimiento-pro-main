@@ -1,5 +1,9 @@
 # Changenotes
 
+## [proyecto] 2026-10-21
+- **Documentación:** ADR `docs/adr/0004-firebase-cloud-messaging-para-notificaciones.md` describe el uso real de Firebase como canal FCM para Android, su integración con Supabase y los flujos de recepción y navegación.
+- **Login:** se quitó el recuadro con las credenciales demo, también en debug. Las cuentas demo siguen existiendo solo en debug. El test de `test/login_screen_test.dart` comprueba que no aparecen correos ni contraseña demo.
+
 ## [*0.0.5*] 2026-10-20
 - **Cuentas:** el login y el registro usan Supabase Auth. La sesión se restaura si Auth sigue abierta; sin esa sesión no vale la copia local.
 - **Historial:** los servicios y el perfil se guardan en el teléfono y se envían a Postgres cuando hay conexión. Si el servidor tiene una versión más nueva, esa gana. Un borrado no se pierde contra una edición vieja.
