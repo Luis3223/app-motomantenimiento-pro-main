@@ -18,29 +18,6 @@ class SupabaseRemoteNotifications implements RemoteNotificationRepository {
   Future<bool> get hasSession async => _client.auth.currentSession != null;
 
   @override
-  Future<void> linkAccount({
-    required String email,
-    required String password,
-  }) async {
-    try {
-      await _client.auth.signInWithPassword(email: email, password: password);
-    } on AuthException {
-      final response = await _client.auth.signUp(
-        email: email,
-        password: password,
-      );
-      if (response.session == null) {
-        throw StateError('No se pudo abrir la sesión de avisos.');
-      }
-    }
-    final userId = _client.auth.currentUser?.id;
-    if (userId == null) {
-      throw StateError('No se pudo abrir la sesión de avisos.');
-    }
-    await _client.from('profiles').upsert({'id': userId});
-  }
-
-  @override
   Future<void> saveDevice({String? fcmToken, DateTime? nextOilDue}) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) return;

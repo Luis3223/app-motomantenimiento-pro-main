@@ -10,6 +10,7 @@ class AppUser {
     required this.bikeVin,
     required this.profileImage,
     this.isAdmin = false,
+    this.remoteUpdatedAt,
   });
 
   final String id;
@@ -22,6 +23,7 @@ class AppUser {
   final String bikeVin;
   final String profileImage;
   final bool isAdmin;
+  final String? remoteUpdatedAt;
 
   AppUser copyWith({
     String? id,
@@ -34,6 +36,7 @@ class AppUser {
     String? bikeVin,
     String? profileImage,
     bool? isAdmin,
+    String? remoteUpdatedAt,
   }) {
     return AppUser(
       id: id ?? this.id,
@@ -46,6 +49,7 @@ class AppUser {
       bikeVin: bikeVin ?? this.bikeVin,
       profileImage: profileImage ?? this.profileImage,
       isAdmin: isAdmin ?? this.isAdmin,
+      remoteUpdatedAt: remoteUpdatedAt ?? this.remoteUpdatedAt,
     );
   }
 
@@ -60,6 +64,7 @@ class AppUser {
     'bikeVin': bikeVin,
     'profileImage': profileImage,
     'isAdmin': isAdmin ? 1 : 0,
+    'remote_updated_at': remoteUpdatedAt,
   };
 
   factory AppUser.fromMap(Map<String, Object?> map) {
@@ -74,6 +79,7 @@ class AppUser {
       bikeVin: map['bikeVin']! as String,
       profileImage: map['profileImage']! as String,
       isAdmin: (map['isAdmin'] as int? ?? 0) == 1,
+      remoteUpdatedAt: map['remote_updated_at'] as String?,
     );
   }
 }

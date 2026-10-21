@@ -4,18 +4,31 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
+import '../data/auth/auth_repository.dart';
 import '../data/models/oil_status.dart';
 import '../data/models/service_record.dart';
 import '../data/models/user.dart';
 import '../data/repository.dart';
+import '../data/sync/sqlite_sync_store.dart';
+import '../data/sync/sync_engine.dart';
+import '../data/sync/sync_remote.dart';
 import '../domain/session_sync.dart';
 
 class AppController extends ChangeNotifier {
-  AppController({Repository? repository, this.sessionSync})
-    : _repository = repository ?? Repository();
+  AppController({
+    Repository? repository,
+    this.sessionSync,
+    this.auth,
+    this.syncRemote,
+    HistorySync? sync,
+  }) : _repository = repository ?? Repository(),
+       _engine = sync;
 
   final Repository _repository;
   final SessionSync? sessionSync;
+  final AuthRepository? auth;
+  final SyncRemote? syncRemote;
+  HistorySync? _engine;
 
   bool ready = false;
   AppUser? currentUser;
@@ -46,6 +59,7 @@ class AppController extends ChangeNotifier {
 
   Future<void> init() async {
     await _repository.init();
+    _engine ??= _buildEngine();
     notifications = List.of(_repository.notifications);
 
     serviceTypes = await _repository.getServiceTypes();
@@ -59,7 +73,21 @@ class AppController extends ChangeNotifier {
       notifyListeners();
     });
 
-    if (await _repository.restoreSession() != null) _startSession();
+    if (auth != null) {
+      final session = await auth!.currentSession();
+      if (session == null) {
+        await _repository.logout();
+      } else {
+        await _repository.adoptRemoteUser(
+          email: session.email,
+          userId: session.userId,
+        );
+        await _syncNow();
+        if (_repository.currentUser != null) _startSession();
+      }
+    } else if (await _repository.restoreSession() != null) {
+      _startSession();
+    }
 
     ready = true;
     notifyListeners();
@@ -235,15 +263,60 @@ class AppController extends ChangeNotifier {
       return false;
     }
     final normalized = _normalizeEmail(email);
-    final success = await _repository.login(normalized, pass);
-    if (success) {
+    final gate = auth;
+    if (gate == null) {
+      final success = await _repository.login(normalized, pass);
+      if (!success) {
+        feedbackMessage =
+            'Credenciales incorrectas. Por favor, intente de nuevo.';
+        notifyListeners();
+        return false;
+      }
       _startSession();
-      unawaited(sessionSync?.linkAccount(email: normalized, password: pass));
       feedbackMessage = '¡Bienvenido de nuevo!';
       notifyListeners();
       return true;
     }
-    feedbackMessage = 'Credenciales incorrectas. Por favor, intente de nuevo.';
+    final outcome = await gate.signIn(email: normalized, password: pass);
+    if (outcome is AuthOffline) {
+      feedbackMessage = 'Sin conexión no se puede iniciar sesión.';
+      notifyListeners();
+      return false;
+    }
+    if (outcome is AuthSignedIn) {
+      await _repository.adoptRemoteUser(
+        email: normalized,
+        userId: outcome.userId,
+      );
+      await _syncNow();
+      _startSession();
+      feedbackMessage = '¡Bienvenido de nuevo!';
+      notifyListeners();
+      return true;
+    }
+    final local = await _repository.login(normalized, pass);
+    if (!local) {
+      feedbackMessage =
+          'Credenciales incorrectas. Por favor, intente de nuevo.';
+      notifyListeners();
+      return false;
+    }
+    final created = await gate.signUp(email: normalized, password: pass);
+    if (created is AuthSignedIn) {
+      await _repository.adoptRemoteUser(
+        email: normalized,
+        userId: created.userId,
+      );
+      await _syncNow();
+      _startSession();
+      feedbackMessage = '¡Bienvenido de nuevo!';
+      notifyListeners();
+      return true;
+    }
+    await _repository.logout();
+    feedbackMessage = created is AuthOffline
+        ? 'Sin conexión no se puede iniciar sesión.'
+        : 'Credenciales incorrectas. Por favor, intente de nuevo.';
     notifyListeners();
     return false;
   }
@@ -279,25 +352,47 @@ class AppController extends ChangeNotifier {
       bikeVin: vin.trim().toUpperCase(),
       profileImage: 'moto_avatar_1',
     );
-    final success = await _repository.register(newUser);
-    if (success) {
-      _startSession();
-      unawaited(
-        sessionSync?.linkAccount(email: normalizedEmail, password: pass),
+    final gate = auth;
+    if (gate == null) {
+      final success = await _repository.register(newUser);
+      if (success) {
+        _startSession();
+        feedbackMessage = '¡Registro exitoso en Casa Racing!';
+        notifyListeners();
+        return true;
+      }
+      feedbackMessage = 'Este correo electrónico ya está registrado.';
+      notifyListeners();
+      return false;
+    }
+    final outcome = await gate.signUp(email: normalizedEmail, password: pass);
+    if (outcome is AuthSignedIn) {
+      await _repository.rememberSession(
+        newUser.copyWith(id: outcome.userId, password: ''),
       );
+      await _syncNow();
+      _startSession();
       feedbackMessage = '¡Registro exitoso en Casa Racing!';
       notifyListeners();
       return true;
     }
-    feedbackMessage = 'Este correo electrónico ya está registrado.';
+    if (outcome is AuthOffline) {
+      feedbackMessage = 'Sin conexión no se puede crear la cuenta.';
+      notifyListeners();
+      return false;
+    }
+    feedbackMessage = outcome is AuthFailed && outcome.alreadyRegistered
+        ? 'Este correo electrónico ya está registrado.'
+        : 'No se pudo crear la cuenta. Inténtalo de nuevo.';
     notifyListeners();
     return false;
   }
 
   Future<void> handleProfileUpdate(AppUser user) async {
     await _repository.updateUserProfile(user);
+    final delivered = await _syncNow();
     currentUser = _repository.currentUser;
-    feedbackMessage = 'Perfil actualizado exitosamente.';
+    feedbackMessage = delivered ? 'Perfil actualizado exitosamente.' : 'Perfil guardado en este dispositivo. Se enviará cuando haya conexión.';
     notifyListeners();
   }
 
@@ -342,9 +437,13 @@ class AppController extends ChangeNotifier {
       ),
     );
     _syncFromRepo();
+    final delivered = await _syncNow();
+    final saved = delivered
+        ? 'Mantenimiento guardado.'
+        : 'Mantenimiento guardado en este dispositivo. Se enviará cuando haya conexión.';
     feedbackMessage = higherEarlier == null
-        ? 'Mantenimiento registrado en este dispositivo.'
-        : 'Mantenimiento registrado, pero el kilometraje es menor que el '
+        ? saved
+        : '$saved El kilometraje es menor que el '
               'de un servicio anterior (${NumberFormat('#,###').format(higherEarlier)} km). '
               'Revisa el dato.';
     notifyListeners();
@@ -354,7 +453,10 @@ class AppController extends ChangeNotifier {
   Future<void> handleDeleteService(ServiceRecord service) async {
     await _repository.deleteService(service);
     _syncFromRepo();
-    feedbackMessage = 'Registro de servicio eliminado.';
+    final delivered = await _syncNow();
+    feedbackMessage = delivered
+        ? 'Registro de servicio eliminado.'
+        : 'Eliminado en este dispositivo. Se enviará cuando haya conexión.';
     notifyListeners();
   }
 
@@ -374,6 +476,7 @@ class AppController extends ChangeNotifier {
 
   void handleLogout() {
     unawaited(sessionSync?.signOut());
+    unawaited(auth?.signOut());
     unawaited(_repository.logout());
     _userServicesSub?.cancel();
     currentUser = null;
@@ -383,6 +486,51 @@ class AppController extends ChangeNotifier {
     showNotificationAlert = null;
     _shownAlertTitles.clear();
     notifyListeners();
+  }
+
+  void syncOnResume() {
+    if (currentUser == null || _engine == null) return;
+    unawaited(_syncNow());
+  }
+
+  HistorySync? _buildEngine() {
+    final remote = syncRemote;
+    if (remote == null) return null;
+    final store = SqliteSyncStore(
+      _repository.db,
+      onChanged: () {
+        unawaited(_repository.reload());
+      },
+    );
+    _repository.syncStore = store;
+    return SyncEngine(store: store, remote: remote);
+  }
+
+  Future<bool> _syncNow() async {
+    final engine = _engine;
+    if (engine == null) return true;
+    try {
+      await engine.pull();
+      final delivered = await engine.flush();
+      if (delivered) {
+        try {
+          await engine.pull();
+        } catch (_) {
+          // El envío ya quedó confirmado; la copia se refresca al volver.
+        }
+      }
+      final id = _repository.currentUser?.id;
+      if (id != null) {
+        final refreshed = await _repository.getUserById(id);
+        if (refreshed != null) {
+          _repository.currentUser = refreshed;
+          if (currentUser != null) currentUser = refreshed;
+        }
+      }
+      return delivered;
+    } catch (_) {
+      return false;
+    }
   }
 
   void showFeedback(String message) {

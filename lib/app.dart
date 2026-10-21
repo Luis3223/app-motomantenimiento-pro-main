@@ -19,19 +19,27 @@ class MotoApp extends StatefulWidget {
   State<MotoApp> createState() => _MotoAppState();
 }
 
-class _MotoAppState extends State<MotoApp> {
+class _MotoAppState extends State<MotoApp> with WidgetsBindingObserver {
   late final GoRouter _router;
   final _messengerKey = GlobalKey<ScaffoldMessengerState>();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _router = createAppRouter(widget.controller);
     widget.controller.addListener(_onControllerChanged);
     widget.push?.attach(
       onForeground: _onForegroundPush,
       onOpened: _onPushOpened,
     );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      widget.controller.syncOnResume();
+    }
   }
 
   void _onForegroundPush(PushMessage message) {
@@ -53,6 +61,7 @@ class _MotoAppState extends State<MotoApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     widget.controller.removeListener(_onControllerChanged);
     super.dispose();
   }

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../data/push/push_coordinator.dart';
+import '../data/models/service_record.dart';
 import '../state/app_controller.dart';
 import '../theme/app_theme.dart';
 
@@ -105,11 +106,22 @@ class _AdminScreenState extends State<AdminScreen> {
             Card(
               child: ListTile(
                 title: Text(s.type),
-                subtitle: Text('${s.userId} · ${s.date} · ${s.mileage} km'),
+                subtitle: Text(
+                  '${_ownerLabel(c, s)} · ${s.date} · ${s.mileage} km',
+                ),
               ),
             ),
         ],
       ),
     );
+  }
+
+  String _ownerLabel(AppController controller, ServiceRecord service) {
+    for (final user in controller.allUsers) {
+      if (user.id != service.userId) continue;
+      if (user.name.isNotEmpty) return user.name;
+      if (user.email.isNotEmpty) return user.email;
+    }
+    return service.userId;
   }
 }

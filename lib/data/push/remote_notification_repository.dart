@@ -1,6 +1,4 @@
 abstract class RemoteNotificationRepository {
-  Future<void> linkAccount({required String email, required String password});
-
   Future<bool> get hasSession;
 
   Future<void> saveDevice({String? fcmToken, DateTime? nextOilDue});

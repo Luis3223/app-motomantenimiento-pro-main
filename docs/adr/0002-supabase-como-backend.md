@@ -14,5 +14,5 @@ La app guarda usuarios y servicios solo en SQLite del dispositivo. La épica de 
 ## Consequences
 
 - Hace falta un proyecto de Firebase limitado a las credenciales de mensajería.
-- Las tareas 16, 17, 25 y 26 se implementan sobre este stack. No hay sincronización en la nube hasta que esa épica esté hecha.
+- Las tareas 16, 17, 25 y 26 se implementan sobre este stack. La sincronización del historial queda descrita en `docs/adr/0003-cola-offline-sqlite.md`.
 - El plan de implementación queda en `docs/Backlog.md` (tarea 17).

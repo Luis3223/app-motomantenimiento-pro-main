@@ -6,7 +6,7 @@ import '../security/password_hasher.dart';
 class AppDatabase {
   AppDatabase._();
 
-  static const schemaVersion = 3;
+  static const schemaVersion = 4;
 
   static Database? _db;
 
@@ -34,7 +34,8 @@ class AppDatabase {
         bikeYear TEXT NOT NULL,
         bikeVin TEXT NOT NULL,
         profileImage TEXT NOT NULL,
-        isAdmin INTEGER NOT NULL DEFAULT 0
+        isAdmin INTEGER NOT NULL DEFAULT 0,
+        remote_updated_at TEXT
       )
     ''');
     await db.execute('''
@@ -45,10 +46,14 @@ class AppDatabase {
         date TEXT NOT NULL,
         mileage INTEGER NOT NULL,
         notes TEXT NOT NULL,
-        category TEXT NOT NULL
+        category TEXT NOT NULL,
+        sync_id TEXT,
+        remote_updated_at TEXT,
+        deleted_at TEXT
       )
     ''');
     await _createSessionTable(db);
+    await _createPendingTable(db);
   }
 
   /// Una sola fila (`id = 1`) con el usuario que tiene la sesión abierta.
@@ -59,7 +64,17 @@ class AppDatabase {
       )
     ''');
 
-  /// Convierte a hash las contraseñas que aún están en texto plano.
+  static Future<void> _createPendingTable(Database db) => db.execute('''
+      CREATE TABLE IF NOT EXISTS pending_changes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        sync_id TEXT NOT NULL,
+        entity TEXT NOT NULL,
+        operation TEXT NOT NULL,
+        payload TEXT NOT NULL,
+        base_updated_at TEXT,
+        created_at TEXT NOT NULL
+      )
+    ''');
   static Future<void> _hashPlaintextPasswords(Database db) async {
     const hasher = PasswordHasher();
     final rows = await db.query('users', columns: ['id', 'password']);
@@ -88,14 +103,20 @@ class AppDatabase {
       await db.execute('DROP TABLE IF EXISTS services');
       await db.execute('DROP TABLE IF EXISTS users');
       await _createTables(db);
+      return;
     }
     if (oldVersion < 3) {
       await _createSessionTable(db);
       await _hashPlaintextPasswords(db);
     }
-    // Siguiente versión, por ejemplo:
-    // if (oldVersion < 4) {
-    //   await db.execute('ALTER TABLE services ADD COLUMN ...');
-    // }
+    if (oldVersion < 4) {
+      await db.execute('ALTER TABLE users ADD COLUMN remote_updated_at TEXT');
+      await db.execute('ALTER TABLE services ADD COLUMN sync_id TEXT');
+      await db.execute(
+        'ALTER TABLE services ADD COLUMN remote_updated_at TEXT',
+      );
+      await db.execute('ALTER TABLE services ADD COLUMN deleted_at TEXT');
+      await _createPendingTable(db);
+    }
   }
 }

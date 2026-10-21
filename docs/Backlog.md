@@ -16,7 +16,7 @@ Leyenda de esfuerzo: **S** (< 1 h) · **M** (medio día) · **L** (1+ días)
 - **Criterio de aceptación:** un usuario no admin que navega a `/history/admin` termina en `/history`.
 
 ### 2. ✅ Eliminar el `onUpgrade` destructivo · S
-> **Hecho (2026-09-29):** `_createTables` compartido y `_migrate` incremental. La reconstrucción solo se mantiene para v1 → v2 (esquema prototipo); las versiones futuras deben usar `ALTER TABLE`. Sin test automático (requiere `sqflite_common_ffi`, ver tarea 19).
+> **Hecho (2026-09-29):** `_createTables` compartido y `_migrate` incremental. La reconstrucción solo se mantiene para v1 → v2 (esquema prototipo); las versiones futuras deben usar `ALTER TABLE`. Sin test automático (requiere `sqflite_common_ffi`).
 
 - **Problema:** `lib/data/database/app_database.dart` hace `DROP TABLE` de `users` y `services` en cualquier cambio de versión. Subir `version` borraría todos los datos reales.
 - **Tarea:** extraer la creación de tablas a una función compartida y sustituir `onUpgrade` por migraciones incrementales (`if (oldVersion < 3) { ALTER TABLE ... }`).
@@ -59,7 +59,7 @@ Leyenda de esfuerzo: **S** (< 1 h) · **M** (medio día) · **L** (1+ días)
 - **Tarea:** aplicar `trim().toLowerCase()` al correo en `handleLogin`, `handleRegister` y `getUserByEmail`. Validar el formato del correo en el registro.
 
 ### 8. ✅ Pérdida de eventos en `watchServicesForUser` · S
-> **Hecho (2026-09-29):** suscripción antes de la consulta inicial; si llega antes un evento en vivo, se descarta el resultado inicial. Sin test automático (requiere `sqflite_common_ffi`, ver tarea 19).
+> **Hecho (2026-09-29):** suscripción antes de la consulta inicial; si llega antes un evento en vivo, se descarta el resultado inicial. Sin test automático (requiere `sqflite_common_ffi`).
 
 - **Problema:** en `repository.dart` el listener se suscribe al controller después de un `await`, así que se puede perder un evento emitido durante la carga inicial.
 - **Tarea:** suscribirse antes de hacer la consulta inicial, o usar un `BehaviorSubject` / último valor cacheado.
@@ -75,14 +75,14 @@ Leyenda de esfuerzo: **S** (< 1 h) · **M** (medio día) · **L** (1+ días)
 - **Archivos:** `repository.dart`, `app_controller.dart`, `dashboard_screen.dart`, `admin_screen.dart`.
 
 ### 10. ✅ Eliminar datos inventados en la UI · M
-> **Hecho (2026-09-30):** sin VIN ni año inventados (campos opcionales en el registro; el perfil los muestra, editarlos queda en la tarea 28); fecha ilegible → "Fecha inválida"; `DetailScreen` mostraba textos vacíos y ahora usa datos reales (el "Llantas: Óptimo" ya no existía). Pendiente: campo `currentMileage` en el usuario.
+> **Hecho (2026-09-30):** sin VIN ni año inventados (campos opcionales en el registro; el perfil los muestra, editarlos queda en la tarea 26); fecha ilegible → "Fecha inválida"; `DetailScreen` mostraba textos vacíos y ahora usa datos reales (el "Llantas: Óptimo" ya no existía). Pendiente: campo `currentMileage` en el usuario.
 - `detail_screen.dart`: "Llantas: Óptimo" está escrito a mano; calcularlo a partir del último servicio de llantas o quitarlo.
 - `handleRegister`: el VIN se genera al azar con el prefijo `YMA` y el año es siempre `2024`. Añadir campos opcionales de año y VIN al registro y al perfil.
 - `_updateDashboardCalculations`: el `catch` muestra valores ficticios ("Faltan 18 días"); mostrar "Fecha inválida" en su lugar.
 - El "odómetro" es el kilometraje más alto de los servicios; considerar un campo `currentMileage` en el usuario.
 
 ### 11. ✅ Datos semilla coherentes · S
-> **Hecho (2026-09-30):** llantas (hace 60 días) pasan a 10 000 km. Sin test automático (requiere `sqflite_common_ffi`, tarea 19); solo afecta a instalaciones nuevas.
+> **Hecho (2026-09-30):** llantas (hace 60 días) pasan a 10 000 km. Sin test automático (requiere `sqflite_common_ffi`); solo afecta a instalaciones nuevas.
 - En `tryPrepopulate` hay un servicio más reciente con menos km que uno anterior (frenos hace 45 días con 10 500 km, llantas hace 60 días con 11 200 km). Ajustar los datos para que el kilometraje crezca con la fecha.
 
 ### 12. ✅ Validar el kilometraje al registrar un servicio · S
@@ -94,12 +94,12 @@ Leyenda de esfuerzo: **S** (< 1 h) · **M** (medio día) · **L** (1+ días)
 ## P3 — Seguridad (antes de producción)
 
 ### 13. ✅ No guardar contraseñas en texto plano · M
-> **Hecho (2026-09-30):** `PasswordHasher` (PBKDF2-HMAC-SHA256, sal aleatoria de 16 bytes, 60 000 iteraciones, formato `pbkdf2$iter$sal$hash`, con prueba contra el vector RFC 7914). Migración v3 que convierte las contraseñas en texto plano. La migración no tiene test automático (requiere `sqflite_common_ffi`, tarea 18). 60 000 es menos de lo que recomienda OWASP (600 000) por el coste del Dart puro en móvil; súbelo cuando haya un backend o un paquete nativo.
+> **Hecho (2026-09-30):** `PasswordHasher` (PBKDF2-HMAC-SHA256, sal aleatoria de 16 bytes, 60 000 iteraciones, formato `pbkdf2$iter$sal$hash`, con prueba contra el vector RFC 7914). Migración v3 que convierte las contraseñas en texto plano. La migración no tiene test automático (requiere `sqflite_common_ffi`). 60 000 es menos de lo que recomienda OWASP (600 000) por el coste del Dart puro en móvil; súbelo cuando haya un backend o un paquete nativo.
 - Guardar un hash con sal (p. ej. `crypto` con PBKDF2, o `bcrypt`) en lugar de la contraseña.
 - Incluir una migración que convierta las contraseñas existentes.
 
 ### 14. ✅ Retirar las cuentas demo en release · S
-> **Hecho (2026-09-30):** `Repository(seedDemoData: kDebugMode)`; en release solo se siembran los tipos de servicio. Sin test automático (tarea 18).
+> **Hecho (2026-09-30):** `Repository(seedDemoData: kDebugMode)`; en release solo se siembran los tipos de servicio. Sin test automático (requiere `sqflite_common_ffi`).
 > **Hecho (2026-10-20):** el recuadro de credenciales del login solo se muestra en debug (`LoginScreen.showDemoCredentials`, por defecto `kDebugMode`); en release no aparece. Tests en `test/login_screen_test.dart`.
 - Ejecutar `tryPrepopulate` solo en `kDebugMode`, o detrás de un flag de compilación. Las credenciales `admin` / `admin` no deben llegar a producción.
 
@@ -111,7 +111,7 @@ Leyenda de esfuerzo: **S** (< 1 h) · **M** (medio día) · **L** (1+ días)
 - Eliminar la sesión guardada si el usuario ya no existe o sus datos no son válidos.
 
 ### 16. ✅ Notificaciones push · L
-> **Hecho (2026-10-20):** app Android en Firebase `motomantenimiento-pro`; en Supabase, `profiles`, `notifications`, la función `push` y un cron a las 08:00 America/Bogota. El admin envía a los dispositivos con token. El payload solo lleva título, mensaje y ruta. Falta el secreto `FCM_SERVICE_ACCOUNT` en la función (cuenta de servicio de Firebase) y, en Auth de Supabase, desactivar la confirmación de correo. Las cuentas demo usan `123456`. La entrega con la app cerrada no se probó en un teléfono.
+> **Hecho (2026-10-20):** app Android en Firebase `motomantenimiento-pro`; en Supabase, `profiles`, `notifications`, la función `push` y un cron a las 08:00 America/Bogota. El admin envía a los dispositivos con token. El payload solo lleva título, mensaje y ruta. La confirmación de correo en Auth está desactivada, las cuentas demo usan `123456` y el secreto `FCM_SERVICE_ACCOUNT` autentica bien con FCM. Aún no hay dispositivos con token, así que la entrega con la app cerrada no se probó en un teléfono.
 
 - Integrar Firebase Cloud Messaging (FCM) para enviar recordatorios de mantenimiento y avisos del administrador aunque la app esté cerrada.
 - Gestionar permisos, registro y renovación de tokens, recepción en primer plano y navegación al contenido relacionado al tocar una notificación.
@@ -121,8 +121,8 @@ Leyenda de esfuerzo: **S** (< 1 h) · **M** (medio día) · **L** (1+ días)
 
 ## P4 — Backend real (épica)
 
-### 17. Sincronización real · L
-> **Decisión (2026-10-20):** el backend es Supabase. Ver `docs/adr/0002-supabase-como-backend.md`. La implementación sigue pendiente.
+### 17. ✅ Sincronización real · L
+> **Hecho (2026-10-20):** Supabase Auth es el login y el registro. Postgres guarda el perfil y los servicios con RLS; SQLite es la caché y la cola `pending_changes`. Gana la escritura con `updated_at` más reciente. El admin ve los clientes que la política le devuelve. ADR `docs/adr/0003-cola-offline-sqlite.md`.
 
 - Autenticación con Supabase Auth, que reemplaza la tabla local `users`.
 - Postgres con RLS como fuente de verdad; SQLite como caché local, con cola de cambios pendientes (offline-first).
@@ -136,59 +136,58 @@ Leyenda de esfuerzo: **S** (< 1 h) · **M** (medio día) · **L** (1+ días)
 
 ## P5 — Calidad y plataforma
 
-### 19. Tests · M
-
-### 20. Soporte de plataformas · S
-## P6 — Evolución funcional y publicación
-
-### 24. API de datos técnicos y configuración de mantenimiento · L
-- Crear una API para gestionar datos manuales de la moto, fichas técnicas, configuraciones, alertas y la periodicidad recomendada de cambio de aceite.
-- Definir el contrato de datos, autenticación y fuente de verdad antes de conectarla con la app.
-- Mantener la regla de 30 días configurable y no presentarla como definitiva hasta confirmarla con Casa Racing o el fabricante.
-
-### 25. Registro y acceso con Google · M
-- Añadir registro e inicio de sesión con Google.
-- Vincular la cuenta social con el usuario local existente sin duplicar cuentas por correo normalizado.
-- La autenticación es Supabase Auth (ADR 0002). No debe implementarse como una simulación local.
-
-### 26. Recuperación y reenvío de contraseña · M
-- Permitir solicitar el reenvío o restablecimiento de contraseña desde la pantalla de login.
-- Mostrar estados claros para correo enviado, cuenta no encontrada y solicitud inválida.
-- El restablecimiento sale de Supabase Auth (ADR 0002); no exponer contraseñas almacenadas.
-
-### 27. Preparación para publicación en Google Play · L
-- Configurar identificador, firma, versión, icono, permisos, política de privacidad y ficha de la aplicación.
-- Generar y validar un `app bundle` de release en un entorno limpio.
-- Retirar cuentas demo, credenciales de prueba y mensajes de sincronización simulada antes de publicar.
-
-### 28. Activar acciones pendientes de la interfaz · M
-- Hacer operativos los botones que todavía solo muestran un mensaje o no tienen acción.
-- Cubrir como mínimo edición del perfil, exportación de datos, borrado del historial, chat y cualquier acción equivalente que siga pendiente en las pantallas.
-- Cada acción debe persistir o ejecutar su operación real, mostrar error recuperable y tener una prueba de regresión del flujo principal.
-- Mover `whatsappNumber` y `storeUrl` de `app_router.dart` a un archivo `lib/config.dart`.
-- Mostrar un `SnackBar` si `canLaunchUrl` falla, en lugar de no hacer nada.
-
-### 21. Limpieza menor · S
+### 19. Limpieza menor · S
 - ✅ (2026-09-30) Timers de sincronización eliminados junto con la tarea 9.
 - ✅ (2026-09-30) `DateTime.now()` unificado en `_updateDashboardCalculations`.
 - Usar un `enum` para `type` y `category` en lugar de strings, en vez de detectar el aceite con `contains('aceite')`.
 
-### 22. Migración incremental a MVVM · L
+### 20. Migración incremental a MVVM · L
 > Decisión en `docs/adr/0001-mvvm-incremental.md`. Regla: cada cambio que toque una feature la migra; no se añaden responsabilidades nuevas a `AppController`.
 
 - **Problema:** `AppController` (≈380 líneas) y `Repository` (≈350) concentran varias responsabilidades (SRP) y todas las pantallas dependen de ellos.
 - **Tareas, en orden sugerido:**
   1. Capa de datos: separar `AppDatabase` como *service* y dividir `Repository` en `UserRepository`, `ServiceRecordRepository` y `NotificationRepository`, inyectados por constructor.
-  2. Extraer el cálculo del ciclo de aceite a una función pura/Use Case con `now` inyectable (coincide con la tarea 19).
+  2. Extraer el cálculo del ciclo de aceite a una función pura/Use Case con `now` inyectable.
   3. Sesión: un `SessionRepository` (o ViewModel de sesión) como única fuente del usuario actual, usado por el `redirect` del router.
   4. Un ViewModel por feature: `auth` (login/registro), `garage`, `history` (lista, alta, detalle), `profile`, `admin`.
   5. Reorganizar carpetas a `lib/ui/features/<feature>/{views,view_models}`, `lib/ui/core/`, `lib/data/{services,repositories,models}`, `lib/domain/`.
   6. Eliminar `AppController` cuando ya no tenga consumidores.
 - **Criterio de aceptación:** ninguna pantalla depende de `AppController`; cada ViewModel tiene tests con repositorios falsos.
 
-### 23. Adoptar `very_good_analysis` de forma incremental · M
+### 21. Adoptar `very_good_analysis` de forma incremental · M
 - **Tarea:**
   1. Añadir `very_good_analysis` a `dev_dependencies` e incluirlo en `analysis_options.yaml` en lugar de `flutter_lints`.
-  2. Contar los avisos por regla y desactivar temporalmente en `analysis_options.yaml` las reglas que hoy fallan, con un comentario `# TODO(backlog-23)`.
-  3. Reactivar las reglas por lotes pequeños, corrigiendo el código en cada lote (idealmente junto con la migración de la tarea 22).
-- **Criterio de aceptación:** no queda ninguna regla desactivada con `TODO(backlog-23)` y `flutter analyze` sigue sin avisos.
+  2. Contar los avisos por regla y desactivar temporalmente en `analysis_options.yaml` las reglas que hoy fallan, con un comentario `# TODO(backlog-21)`.
+  3. Reactivar las reglas por lotes pequeños, corrigiendo el código en cada lote (idealmente junto con la migración de la tarea 20).
+- **Criterio de aceptación:** no queda ninguna regla desactivada con `TODO(backlog-21)` y `flutter analyze` sigue sin avisos.
+
+---
+
+## P6 — Evolución funcional y publicación
+
+### 22. API de datos técnicos y configuración de mantenimiento · L
+- Crear una API para gestionar datos manuales de la moto, fichas técnicas, configuraciones, alertas y la periodicidad recomendada de cambio de aceite.
+- Definir el contrato de datos, autenticación y fuente de verdad antes de conectarla con la app.
+- Mantener la regla de 30 días configurable y no presentarla como definitiva hasta confirmarla con Casa Racing o el fabricante.
+
+### 23. Registro y acceso con Google · M
+- Añadir registro e inicio de sesión con Google.
+- Vincular la cuenta social con el usuario local existente sin duplicar cuentas por correo normalizado.
+- La autenticación es Supabase Auth (ADR 0002). No debe implementarse como una simulación local.
+
+### 24. Recuperación y reenvío de contraseña · M
+- Permitir solicitar el reenvío o restablecimiento de contraseña desde la pantalla de login.
+- Mostrar estados claros para correo enviado, cuenta no encontrada y solicitud inválida.
+- El restablecimiento sale de Supabase Auth (ADR 0002); no exponer contraseñas almacenadas.
+
+### 25. Preparación para publicación en Google Play · L
+- Configurar identificador, firma, versión, icono, permisos, política de privacidad y ficha de la aplicación.
+- Generar y validar un `app bundle` de release en un entorno limpio.
+- Retirar cuentas demo, credenciales de prueba y mensajes de sincronización simulada antes de publicar.
+
+### 26. Activar acciones pendientes de la interfaz · M
+- Hacer operativos los botones que todavía solo muestran un mensaje o no tienen acción.
+- Cubrir como mínimo edición del perfil, exportación de datos, borrado del historial, chat y cualquier acción equivalente que siga pendiente en las pantallas.
+- Cada acción debe persistir o ejecutar su operación real, mostrar error recuperable y tener una prueba de regresión del flujo principal.
+- Mover `whatsappNumber` y `storeUrl` de `app_router.dart` a un archivo `lib/config.dart`.
+- Mostrar un `SnackBar` si `canLaunchUrl` falla, en lugar de no hacer nada.

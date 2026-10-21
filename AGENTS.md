@@ -58,7 +58,7 @@ Todo código nuevo o modificado sigue **SOLID** y **DRY**. Si un cambio los viol
 
 ## Arquitectura
 
-**Objetivo:** MVVM por feature con Repositories + Services, migrando de forma incremental: `docs/adr/0001-mvvm-incremental.md` y `docs/Backlog.md` (tarea 22). **Estado actual**, que se irá reemplazando:
+**Objetivo:** MVVM por feature con Repositories + Services, migrando de forma incremental: `docs/adr/0001-mvvm-incremental.md` y `docs/Backlog.md` (tarea 20). **Estado actual**, que se irá reemplazando:
 
 Flujo de capas: `sqflite` → `Repository` → `AppController` (único `ChangeNotifier`) → pantallas vía `provider`.
 
@@ -72,7 +72,7 @@ Flujo de capas: `sqflite` → `Repository` → `AppController` (único `ChangeNo
 
 - `AppController` acepta un `Repository` inyectable; `test/support/fake_repository.dart` tiene `FakeRepository` (extiende `Repository`, en memoria, registra llamadas) y helpers `testUser()` / `testService()`.
 - Los tests de router/pantallas montan `ChangeNotifierProvider.value` + `MaterialApp.router(routerConfig: createAppRouter(controller))`, fijando `controller.ready` y `controller.currentUser` directamente.
-- El `Repository` real (SQLite) no tiene tests: haría falta `sqflite_common_ffi` (Backlog, tarea 18).
+- El `Repository` real (SQLite) no tiene tests: haría falta `sqflite_common_ffi`.
 
 ## Puerta de calidad
 
@@ -84,7 +84,7 @@ Flujo de capas: `sqflite` → `Repository` → `AppController` (único `ChangeNo
 | Cursor | Hook `stop` en `.cursor/hooks.json` → `.cursor/hooks/stop-verify.sh`. No puede bloquear: si falla, envía un `followup_message` para que el agente lo corrija. |
 | CI | `.github/workflows/verify.yml`, en cada PR y en cada push a `main`. Además exige que `lib/` y `test/` estén formateados. |
 
-Ambos hooks son adaptadores finos sobre `tool/verify-cached.sh`, que formatea los `.dart` modificados, cachea el resultado por hash del código en `.dart_tool/verify/` y deja el log en `.dart_tool/verify/output.log`. La lógica común va en `tool/`; los adaptadores solo traducen el resultado al protocolo de cada herramienta. En CI, la versión de Flutter está fijada en `verify.yml`: actualízala cuando cambies la versión local. Plan para endurecer los lints: `docs/Backlog.md`, tarea 23.
+Ambos hooks son adaptadores finos sobre `tool/verify-cached.sh`, que formatea los `.dart` modificados, cachea el resultado por hash del código en `.dart_tool/verify/` y deja el log en `.dart_tool/verify/output.log`. La lógica común va en `tool/`; los adaptadores solo traducen el resultado al protocolo de cada herramienta. En CI, la versión de Flutter está fijada en `verify.yml`: actualízala cuando cambies la versión local. Plan para endurecer los lints: `docs/Backlog.md`, tarea 21.
 
 ## Skills del proyecto
 
@@ -113,5 +113,5 @@ Una skill se ejecuta con todos los permisos del agente. Antes de instalarla:
 
 ## Restricciones de producto
 
-- El backend elegido es Supabase (`docs/adr/0002-supabase-como-backend.md`). Los avisos push ya usan Supabase y FCM (tarea 16). El historial sigue solo en el dispositivo (tarea 17). No añadas copy que prometa sincronización del historial en la nube ni inventes testimonios, certificaciones o assets de Casa Racing. No abras otra opción de backend (Firebase Auth, Firestore u otro) sin una decisión nueva.
+- El backend elegido es Supabase (`docs/adr/0002-supabase-como-backend.md`). Los avisos push ya usan Supabase y FCM (tarea 16). El historial se sincroniza con Postgres y SQLite queda como caché con cola (tarea 17, ADR 0003). No prometas tiempo real ni inventes testimonios, certificaciones o assets de Casa Racing. No abras otra opción de backend (Firebase Auth, Firestore u otro) sin una decisión nueva.
 - La regla de 30 días del aceite y los canales (WhatsApp, URL de tienda) no están confirmados como definitivos; no los cambies sin indicación.

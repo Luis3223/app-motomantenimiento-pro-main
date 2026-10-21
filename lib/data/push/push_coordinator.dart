@@ -59,19 +59,6 @@ class PushCoordinator implements SessionSync {
   }
 
   @override
-  Future<void> linkAccount({
-    required String email,
-    required String password,
-  }) async {
-    try {
-      await remote.linkAccount(email: email, password: password);
-      await _pushTokenAndOil();
-    } catch (_) {
-      // La sesión local sigue válida si el enlace de avisos falla.
-    }
-  }
-
-  @override
   Future<void> onServicesChanged(List<ServiceRecord> services) async {
     _services = services;
     try {

@@ -7,6 +7,9 @@ class ServiceRecord {
     required this.mileage,
     required this.notes,
     required this.category,
+    this.syncId,
+    this.remoteUpdatedAt,
+    this.deletedAt,
   });
 
   final int? id;
@@ -16,6 +19,9 @@ class ServiceRecord {
   final int mileage;
   final String notes;
   final String category;
+  final String? syncId;
+  final String? remoteUpdatedAt;
+  final String? deletedAt;
 
   ServiceRecord copyWith({
     int? id,
@@ -25,6 +31,9 @@ class ServiceRecord {
     int? mileage,
     String? notes,
     String? category,
+    String? syncId,
+    String? remoteUpdatedAt,
+    String? deletedAt,
   }) {
     return ServiceRecord(
       id: id ?? this.id,
@@ -34,6 +43,9 @@ class ServiceRecord {
       mileage: mileage ?? this.mileage,
       notes: notes ?? this.notes,
       category: category ?? this.category,
+      syncId: syncId ?? this.syncId,
+      remoteUpdatedAt: remoteUpdatedAt ?? this.remoteUpdatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
     );
   }
 
@@ -45,6 +57,9 @@ class ServiceRecord {
     'mileage': mileage,
     'notes': notes,
     'category': category,
+    'sync_id': syncId,
+    'remote_updated_at': remoteUpdatedAt,
+    'deleted_at': deletedAt,
   };
 
   factory ServiceRecord.fromMap(Map<String, Object?> map) {
@@ -56,6 +71,9 @@ class ServiceRecord {
       mileage: map['mileage']! as int,
       notes: map['notes']! as String,
       category: map['category']! as String,
+      syncId: map['sync_id'] as String?,
+      remoteUpdatedAt: map['remote_updated_at'] as String?,
+      deletedAt: map['deleted_at'] as String?,
     );
   }
 }

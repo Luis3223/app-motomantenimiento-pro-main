@@ -108,6 +108,42 @@ class FakeRepository extends Repository {
   @override
   Future<void> logout() async => currentUser = null;
 
+  @override
+  Future<AppUser?> getUserById(String id) async {
+    for (final user in users) {
+      if (user.id == id) return user;
+    }
+    return null;
+  }
+
+  @override
+  Future<void> rememberSession(AppUser user) async {
+    users.add(user);
+    currentUser = user;
+  }
+
+  @override
+  Future<void> adoptRemoteUser({
+    required String email,
+    required String userId,
+  }) async {
+    final index = users.indexWhere((user) => user.email == email);
+    if (index < 0) {
+      final created = testUser(email: email).copyWith(id: userId, password: '');
+      users.add(created);
+      currentUser = created;
+      return;
+    }
+    final previousId = users[index].id;
+    users[index] = users[index].copyWith(id: userId);
+    for (var i = 0; i < services.length; i++) {
+      if (services[i].userId == previousId) {
+        services[i] = services[i].copyWith(userId: userId);
+      }
+    }
+    currentUser = users[index];
+  }
+
   /// Usuario con sesión guardada al arrancar (simula el almacenamiento).
   AppUser? savedSession;
 

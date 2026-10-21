@@ -89,12 +89,6 @@ class _FakeRemote implements RemoteNotificationRepository {
   Future<bool> get hasSession async => false;
 
   @override
-  Future<void> linkAccount({
-    required String email,
-    required String password,
-  }) async {}
-
-  @override
   Future<void> saveDevice({String? fcmToken, DateTime? nextOilDue}) async {}
 
   @override

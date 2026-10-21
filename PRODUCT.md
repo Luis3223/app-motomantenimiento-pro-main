@@ -10,7 +10,7 @@ android
 
 Dueños de moto que mantienen su vehículo con el proveedor **Casa Racing**. Quieren saber cuándo toca el siguiente servicio (sobre todo el cambio de aceite), llevar un historial confiable de lo hecho y contactar al taller o la tienda sin salir de la app.
 
-Audiencia secundaria confirmada por el producto: personal **admin** de Casa Racing, que ve usuarios del dispositivo y puede enviar avisos.
+Audiencia secundaria confirmada por el producto: personal **admin** de Casa Racing, que ve los clientes sincronizados y puede enviar avisos.
 
 ## Product Purpose
 
@@ -27,23 +27,23 @@ No es un recordatorio genérico ni un cuaderno digital suelto: es la app de mant
 - Uso principal en el teléfono Android del motero (garage / vía / casa).
 - Flujos centrales: login o registro → Mi Garage (estado del aceite y resumen) → Historial (servicios + alta) → Mi Perfil; contacto por WhatsApp y enlace a la tienda virtual.
 - Admin: panel bajo Historial para ver usuarios y disparar alertas.
-- Hoy los datos viven en SQLite local en el dispositivo; no hay backend real de sincronización (mensajes de “Firebase” en UI son simulados y no deben tratarse como sincronización verdadera).
+- Los datos de cuenta y de servicios viven en Supabase (Auth y Postgres con RLS). SQLite es la caché del teléfono y la cola de cambios pendientes; sin red se sigue usando lo último guardado. No hay indicador de “en línea” ni promesa de tiempo real.
 
 ## Capabilities and Constraints
 
 Confirmado en producto/código:
 
-- Auth local (usuario / admin), registro de moto (modelo, placa, año, VIN).
+- Auth con Supabase (usuario / admin), registro de moto (modelo, placa, año, VIN). El teléfono guarda una caché.
 - Dashboard de garage con ciclo de aceite orientado a **30 días**, historial de servicios, alta de registro, perfil editable.
 - Roles: usuario y admin.
 - Enlaces operativos presentes en código: WhatsApp `+57 322 506 2876`, tienda `https://tiendavirtualcasaracing.lovable.app/`.
-- Stack existente: Flutter + Material 3, `provider`, `go_router`, `sqflite`, `url_launcher`.
+- Stack existente: Flutter + Material 3, `provider`, `go_router`, `sqflite`, `supabase_flutter`, `url_launcher`.
 
 Abiertos / no inventar:
 
 - Si el ciclo de 30 días es la regla de negocio definitiva de Casa Racing o una aproximación al manual del fabricante.
 - Si el número de WhatsApp y la URL de tienda son los canales de producción finales.
-- El backend elegido es Supabase (ADR 0002). Los avisos push están cableados (FCM + Supabase); la sincronización del historial sigue pendiente.
+- El backend es Supabase (ADR 0002). Los avisos push salen por FCM. El historial se sincroniza con cola offline (ADR 0003).
 - Accesibilidad y requisitos de inclusión específicos del negocio: no establecidos.
 
 ## Brand Commitments

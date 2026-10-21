@@ -1,6 +1,14 @@
 # Changenotes
 
+## [*0.0.5*] 2026-10-20
+- **Cuentas:** el login y el registro usan Supabase Auth. La sesión se restaura si Auth sigue abierta; sin esa sesión no vale la copia local.
+- **Historial:** los servicios y el perfil se guardan en el teléfono y se envían a Postgres cuando hay conexión. Si el servidor tiene una versión más nueva, esa gana. Un borrado no se pierde contra una edición vieja.
+- **Admin:** el panel lista los clientes y servicios que la política de Postgres devuelve, con el nombre del cliente.
+- **Tests:** cola de sincronización (envío, fallo de red, gana el servidor, borrado) y login que no usa el hash local como fuente de verdad.
+- **ADR:** `docs/adr/0003-cola-offline-sqlite.md`.
+
 ## [proyecto] 2026-10-20
+- **Backlog:** la numeración queda seguida del 1 al 26. Limpieza menor, MVVM y `very_good_analysis` son las tareas 19, 20 y 21 (P5). La evolución funcional ocupa las tareas 22 a 26 (P6).
 - **Backend:** se cierra la elección de la tarea 17. El backend es Supabase (Auth, Postgres con RLS y Edge Functions). El push en Android sigue por FCM. ADR `docs/adr/0002-supabase-como-backend.md`.
 - **Push:** el aviso del admin y el recordatorio de aceite (5 días antes y el día del vencimiento) salen por FCM. Supabase guarda el token y la función `push` envía título y ruta, sin datos de la moto.
 - **Cuentas demo:** la contraseña pasa a `123456` en las tres cuentas, para poder enlazarlas con Supabase Auth. Una instalación debug que aún tenga `123` o `admin` se actualiza al abrir la app.

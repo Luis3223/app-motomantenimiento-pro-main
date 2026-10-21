@@ -14,4 +14,4 @@ Hoy un único `AppController` concentra sesión, listas, ciclo de aceite, alerta
 ## Consequences
 
 - Durante la transición conviven `AppController` y los nuevos ViewModels; el código nuevo no debe añadir responsabilidades a `AppController`.
-- El plan de pasos está en `docs/Backlog.md` (tarea 22).
+- El plan de pasos está en `docs/Backlog.md` (tarea 20).

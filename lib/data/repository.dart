@@ -10,6 +10,9 @@ import 'models/oil_status.dart';
 import 'models/service_record.dart';
 import 'models/user.dart';
 import 'security/password_hasher.dart';
+import 'sync/pending_change.dart';
+import 'sync/sync_id.dart';
+import 'sync/sync_store.dart';
 
 class Repository {
   /// [seedDemoData] siembra las cuentas demo; por defecto solo en debug, para
@@ -19,6 +22,7 @@ class Repository {
 
   final PasswordHasher _hasher;
   final bool seedDemoData;
+  SyncStore? syncStore;
 
   Database? _db;
   AppUser? currentUser;
@@ -47,12 +51,12 @@ class Repository {
     notifications = [
       InAppNotification(
         title: 'Bienvenido a Casa Racing',
-        message:
-            'Tu app de mantenimiento guarda tus registros en este dispositivo.',
+        message: 'Tus registros se guardan en este dispositivo y se envían cuando hay conexión.',
         date: DateFormat('dd MMM yyyy').format(DateTime.now()),
       ),
     ];
     await tryPrepopulate();
+    await _ensureSyncIds();
     await _emitUsers();
     await _emitAllServices();
   }
@@ -131,7 +135,7 @@ class Repository {
   Future<List<ServiceRecord>> getServicesForUser(String userId) async {
     final rows = await db.query(
       'services',
-      where: 'userId = ?',
+      where: 'userId = ? AND deleted_at IS NULL',
       whereArgs: [userId],
       orderBy: 'date DESC, mileage DESC',
     );
@@ -139,17 +143,25 @@ class Repository {
   }
 
   Future<List<ServiceRecord>> getAllServices() async {
-    final rows = await db.query('services', orderBy: 'date DESC, mileage DESC');
+    final rows = await db.query(
+      'services',
+      where: 'deleted_at IS NULL',
+      orderBy: 'date DESC, mileage DESC',
+    );
     return rows.map(ServiceRecord.fromMap).toList();
   }
 
   Future<void> insertService(ServiceRecord service) async {
+    final stored = service.syncId == null
+        ? service.copyWith(syncId: newSyncId())
+        : service;
     await db.insert(
       'services',
-      service.toMap()..remove('id'),
+      stored.toMap()..remove('id'),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
-    if (service.type == 'Cambio de Aceite') {
+    await syncStore?.enqueue(serviceChange(stored, operation: opUpsert));
+    if (stored.type == 'Cambio de Aceite') {
       pushCustomNotification(
         'Servicio Registrado',
         '¡Tu Cambio de Aceite mensual ha sido registrado con éxito! Tu barra de progreso se ha reiniciado.',
@@ -157,19 +169,50 @@ class Repository {
     } else {
       pushCustomNotification(
         'Servicio Registrado',
-        'Registro de ${service.type} guardado en este dispositivo.',
+        'Registro de ${stored.type} guardado.',
       );
     }
     await _emitAllServices();
   }
 
   Future<void> deleteService(ServiceRecord service) async {
+    final now = DateTime.now().toUtc().toIso8601String();
     if (service.id != null) {
-      await db.delete('services', where: 'id = ?', whereArgs: [service.id]);
+      await db.update(
+        'services',
+        {'deleted_at': now},
+        where: 'id = ?',
+        whereArgs: [service.id],
+      );
+    } else if (service.syncId != null) {
+      await db.update(
+        'services',
+        {'deleted_at': now},
+        where: 'sync_id = ?',
+        whereArgs: [service.syncId],
+      );
+    }
+    final syncId = service.syncId;
+    final store = syncStore;
+    if (store != null && syncId != null) {
+      if (service.remoteUpdatedAt == null) {
+        await store.removePending(
+          PendingChange(
+            entity: entityService,
+            syncId: syncId,
+            operation: opDelete,
+            payload: const {},
+          ),
+        );
+      } else {
+        await store.enqueue(
+          serviceChange(service.copyWith(deletedAt: now), operation: opDelete),
+        );
+      }
     }
     pushCustomNotification(
       'Servicio Eliminado',
-      'Mantenimiento de `${service.type}` eliminado de este dispositivo.',
+      'Mantenimiento de ${service.type} eliminado.',
     );
     await _emitAllServices();
   }
@@ -286,7 +329,8 @@ class Repository {
     }
 
     Future<void> seed(ServiceRecord s) async {
-      await db.insert('services', s.toMap()..remove('id'));
+      final map = s.copyWith(syncId: newSyncId()).toMap()..remove('id');
+      await db.insert('services', map);
     }
 
     await seed(
@@ -425,9 +469,115 @@ class Repository {
 
   Future<void> updateUserProfile(AppUser user) async {
     await insertUser(user);
-    if (currentUser?.id == user.id) {
+    if (currentUser?.id == user.id || currentUser?.email == user.email) {
       currentUser = user;
     }
+    await syncStore?.enqueue(profileChange(user));
+  }
+
+  Future<AppUser?> getUserById(String id) async {
+    final rows = await db.query(
+      'users',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return AppUser.fromMap(rows.first);
+  }
+
+  /// Deja el perfil en la caché y abre la sesión local tras un registro remoto.
+  Future<void> rememberSession(AppUser user) async {
+    final stored = user.copyWith(password: '');
+    await updateUserProfile(stored);
+    currentUser = stored;
+    await _saveSession(stored.id);
+  }
+
+  /// Pasa la caché local al uuid de Auth y encola lo que aún no se envió.
+  Future<void> adoptRemoteUser({
+    required String email,
+    required String userId,
+  }) async {
+    final local = email.isEmpty
+        ? await getUserById(userId)
+        : await getUserByEmail(email);
+    if (local == null) {
+      final existing = await getUserById(userId);
+      currentUser =
+          existing ??
+          AppUser(
+            id: userId,
+            email: email,
+            password: '',
+            name: '',
+            bikeModel: '',
+            bikePlate: '',
+            bikeYear: '',
+            bikeVin: '',
+            profileImage: '',
+          );
+      if (existing == null) await insertUser(currentUser!);
+      await _saveSession(userId);
+      return;
+    }
+    final rekeyed = local.id != userId;
+    if (rekeyed) {
+      await db.update(
+        'users',
+        {'id': userId},
+        where: 'id = ?',
+        whereArgs: [local.id],
+      );
+      await db.update(
+        'services',
+        {'userId': userId},
+        where: 'userId = ?',
+        whereArgs: [local.id],
+      );
+    }
+    currentUser = (await getUserById(userId))!;
+    await _saveSession(userId);
+    if (rekeyed || local.remoteUpdatedAt == null) {
+      await enqueueUnsynced(userId);
+    }
+  }
+
+  Future<void> enqueueUnsynced(String userId) async {
+    final store = syncStore;
+    if (store == null) return;
+    final user = await getUserById(userId);
+    if (user != null) await store.enqueue(profileChange(user));
+    final rows = await db.query(
+      'services',
+      where: 'userId = ? AND deleted_at IS NULL',
+      whereArgs: [userId],
+    );
+    for (final row in rows) {
+      final service = ServiceRecord.fromMap(row);
+      if (service.remoteUpdatedAt != null || service.syncId == null) continue;
+      await store.enqueue(serviceChange(service, operation: opUpsert));
+    }
+  }
+
+  Future<void> reload() async {
+    await _emitUsers();
+    await _emitAllServices();
+  }
+
+  Future<void> _ensureSyncIds() async {
+    final rows = await db.query('services', where: 'sync_id IS NULL');
+    for (final row in rows) {
+      await db.update(
+        'services',
+        {'sync_id': newSyncId()},
+        where: 'id = ?',
+        whereArgs: [row['id']],
+      );
+    }
+    await db.execute(
+      'CREATE UNIQUE INDEX IF NOT EXISTS services_sync_id_idx ON services(sync_id)',
+    );
   }
 
   Future<void> dispose() async {

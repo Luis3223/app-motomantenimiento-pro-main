@@ -226,5 +226,5 @@ Filosofía: **Premium contenido — redondeados, densos, el rojo solo en la acci
 - **Don't** saturar con mucho texto ni muchos botones en el primer viewport de una pantalla.
 - **Don't** usar neones, look gaming, ni glassmorphism.
 - **Don't** usar Contact Green fuera del canal WhatsApp.
-- **Don't** afirmar sync/Firebase visualmente con indicadores “online” mientras el backend no exista (honestidad de producto).
+- **Don't** afirmar tiempo real ni mostrar un indicador de “en línea”. El copy dice si el cambio quedó guardado o si se enviará al haber conexión.
 - **Don't** introducir tipografías display ni elevaciones decorativas en cards en reposo.
