@@ -3,6 +3,7 @@
 ## [*0.0.7*] 2026-11-03
 - **Acceso con Google:** «Continuar con Google» en login y registro (selector nativo de Android + Supabase Auth). Si ya existe una cuenta con ese correo, se usa la misma, con su historial. Requiere los clientes OAuth de Google y `googleWebClientId`; sin ellos, el botón avisa que no está disponible.
 - **Recuperar contraseña:** desde el login se pide un enlace por correo y se puede reenviar. Al abrirlo en el teléfono, la app pide la contraseña nueva. El mensaje de envío no revela si el correo tiene cuenta. Un enlace vencido avisa y lleva a pedir otro.
+- **Corrección (login):** el teclado se cerraba al tocar un campo. El login cambiaba de padre al aparecer el teclado y Flutter recreaba los campos sin foco. Ahora el árbol es el mismo con y sin teclado (scroll bloqueado mientras no hay teclado). Test de regresión en `test/login_screen_test.dart`.
 - **Código:** `PasswordResetViewModel` en `lib/ui/features/auth/` (primer paso de la tarea 20), `AuthTextField` y `GoogleSignInButton` compartidos, validación de correo única en `lib/domain/email.dart`.
 - **Tests:** ViewModels de recuperación, pantallas y rutas, apertura del enlace (también durante el arranque), sesión de recuperación que no abre la app, acceso con Google (enlace sin duplicar, cuenta nueva, cancelación y errores).
 - **Configuración:** clientes OAuth de Google (Web y Android), proveedor Google y Redirect URL del deep link en Supabase; `googleWebClientId` y `passwordResetRedirect` en `lib/config.dart`.

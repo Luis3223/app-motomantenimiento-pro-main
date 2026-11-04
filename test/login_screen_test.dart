@@ -34,10 +34,18 @@ void main() {
     expect(find.textContaining(demoPassword), findsNothing);
   });
 
-  testWidgets('sin teclado el login no usa scroll', (tester) async {
+  testWidgets('sin teclado todo el login cabe sin desplazar', (tester) async {
     await _pumpLogin(tester, surface: const Size(360, 740));
 
-    expect(find.byType(SingleChildScrollView), findsNothing);
+    final scrollable = tester.state<ScrollableState>(
+      find
+          .descendant(
+            of: find.byType(SingleChildScrollView),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(scrollable.position.maxScrollExtent, 0);
     expect(find.text('Iniciar sesión'), findsOneWidget);
     expect(find.text('RENDIMIENTO'), findsOneWidget);
   });
@@ -50,5 +58,28 @@ void main() {
 
     final footer = tester.getBottomLeft(find.text('RENDIMIENTO'));
     expect(footer.dy, greaterThan(surface.height * 0.75));
+  });
+
+  // Regresión: al abrirse el teclado el login cambiaba de padre y recreaba
+  // los campos; el campo perdía el foco y Android cerraba el teclado.
+  testWidgets('abrir el teclado no quita el foco al campo de correo', (
+    tester,
+  ) async {
+    await _pumpLogin(tester, surface: const Size(412, 915));
+    addTearDown(tester.view.resetViewInsets);
+
+    await tester.tap(find.byType(TextField).first);
+    await tester.pump();
+    final before = tester.state(find.byType(EditableText).first);
+    expect(tester.testTextInput.isVisible, isTrue);
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 900);
+    await tester.pumpAndSettle();
+
+    final field = find.byType(EditableText).first;
+    expect(tester.state(field), same(before));
+    expect(tester.widget<EditableText>(field).focusNode.hasFocus, isTrue);
+    await tester.enterText(find.byType(TextField).first, 'luis@gmail.com');
+    expect(find.text('luis@gmail.com'), findsOneWidget);
   });
 }

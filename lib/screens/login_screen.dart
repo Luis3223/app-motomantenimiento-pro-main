@@ -78,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
@@ -139,17 +139,30 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final metrics = _LoginMetrics(constraints.maxHeight);
-                  final body = Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: _buildBody(context, metrics, expand: !keyboardOpen),
+                  // La escala usa el alto sin teclado: abrirlo no reorganiza
+                  // la pantalla, solo permite desplazarla.
+                  final metrics = _LoginMetrics(
+                    constraints.maxHeight + keyboardHeight,
                   );
-
-                  // Sin teclado: todo cabe en pantalla. Con teclado: scroll.
-                  if (keyboardOpen) {
-                    return SingleChildScrollView(child: body);
-                  }
-                  return body;
+                  // El árbol es el mismo con y sin teclado. Si cambiara de
+                  // padre, Flutter recrearía los campos y el enfocado perdería
+                  // el foco, lo que cierra el teclado.
+                  return SingleChildScrollView(
+                    physics: keyboardHeight > 0
+                        ? null
+                        : const NeverScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: IntrinsicHeight(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: _buildBody(context, metrics),
+                        ),
+                      ),
+                    ),
+                  );
                 },
               ),
             ],
@@ -159,11 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildBody(
-    BuildContext context,
-    _LoginMetrics m, {
-    required bool expand,
-  }) {
+  Widget _buildBody(BuildContext context, _LoginMetrics m) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -393,7 +402,8 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ],
         ),
-        if (expand) const Spacer() else SizedBox(height: m.footerGap),
+        SizedBox(height: m.footerGap),
+        const Spacer(),
         FittedBox(
           fit: BoxFit.scaleDown,
           child: Row(
