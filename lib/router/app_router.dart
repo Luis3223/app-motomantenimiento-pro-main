@@ -18,7 +18,9 @@ import '../screens/register_screen.dart';
 import '../screens/service_detail_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/splash_screen.dart';
+import '../ui/features/auth/view_models/new_password_view_model.dart';
 import '../ui/features/auth/view_models/password_reset_view_model.dart';
+import '../ui/features/auth/views/new_password_screen.dart';
 import '../ui/features/auth/views/password_reset_screen.dart';
 import '../widgets/notification_banner.dart';
 
@@ -40,7 +42,12 @@ Future<void> openStore() async {
 }
 
 /// Rutas de acceso: abiertas sin sesión y cerradas con ella.
-const _publicRoutes = {'/login', '/register', '/forgot-password'};
+const _publicRoutes = {
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password',
+};
 
 GoRouter createAppRouter(AppController controller) {
   return GoRouter(
@@ -77,6 +84,14 @@ GoRouter createAppRouter(AppController controller) {
           create: (context) =>
               PasswordResetViewModel(context.read<PasswordResetRepository>()),
           child: const PasswordResetScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        builder: (context, state) => ChangeNotifierProvider(
+          create: (context) =>
+              NewPasswordViewModel(context.read<PasswordResetRepository>()),
+          child: const NewPasswordScreen(),
         ),
       ),
       GoRoute(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -29,6 +31,11 @@ class MotoApp extends StatefulWidget {
 class _MotoAppState extends State<MotoApp> with WidgetsBindingObserver {
   late final GoRouter _router;
   final _messengerKey = GlobalKey<ScaffoldMessengerState>();
+  StreamSubscription<RecoveryLink>? _recoverySub;
+
+  /// Enlace abierto antes de que el controller esté listo: el router aún
+  /// mostraría el splash, así que se aplica al terminar el arranque.
+  RecoveryLink? _pendingRecovery;
 
   @override
   void initState() {
@@ -40,6 +47,24 @@ class _MotoAppState extends State<MotoApp> with WidgetsBindingObserver {
       onForeground: _onForegroundPush,
       onOpened: _onPushOpened,
     );
+    _recoverySub = widget.passwordReset.recoveryLinks.listen(_onRecoveryLink);
+  }
+
+  void _onRecoveryLink(RecoveryLink link) {
+    if (!widget.controller.ready) {
+      _pendingRecovery = link;
+      return;
+    }
+    if (link == RecoveryLink.opened) {
+      _router.go('/reset-password');
+      return;
+    }
+    _messengerKey.currentState?.showSnackBar(
+      const SnackBar(
+        content: Text('El enlace no es válido o ya venció. Pide uno nuevo.'),
+      ),
+    );
+    _router.go('/forgot-password');
   }
 
   @override
@@ -60,6 +85,14 @@ class _MotoAppState extends State<MotoApp> with WidgetsBindingObserver {
   }
 
   void _onControllerChanged() {
+    final pending = _pendingRecovery;
+    if (pending != null && widget.controller.ready) {
+      _pendingRecovery = null;
+      // Tras el notifyListeners de `ready`, el router ya dejó el splash.
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _onRecoveryLink(pending),
+      );
+    }
     final msg = widget.controller.feedbackMessage;
     if (msg == null) return;
     _messengerKey.currentState?.showSnackBar(SnackBar(content: Text(msg)));
@@ -70,6 +103,7 @@ class _MotoAppState extends State<MotoApp> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     widget.controller.removeListener(_onControllerChanged);
+    _recoverySub?.cancel();
     super.dispose();
   }
 

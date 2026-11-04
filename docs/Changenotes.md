@@ -2,10 +2,11 @@
 
 ## [*0.0.7*] 2026-11-03
 - **Acceso con Google:** «Continuar con Google» en login y registro (selector nativo de Android + Supabase Auth). Si ya existe una cuenta con ese correo, se usa la misma, con su historial. Requiere los clientes OAuth de Google y `googleWebClientId`; sin ellos, el botón avisa que no está disponible.
-- **Recuperar contraseña:** desde el login se pide un código por correo, se puede reenviar y se elige la contraseña nueva. El mensaje de envío no revela si el correo tiene cuenta.
+- **Recuperar contraseña:** desde el login se pide un enlace por correo y se puede reenviar. Al abrirlo en el teléfono, la app pide la contraseña nueva. El mensaje de envío no revela si el correo tiene cuenta. Un enlace vencido avisa y lleva a pedir otro.
 - **Código:** `PasswordResetViewModel` en `lib/ui/features/auth/` (primer paso de la tarea 20), `AuthTextField` y `GoogleSignInButton` compartidos, validación de correo única en `lib/domain/email.dart`.
-- **Tests:** ViewModel de recuperación, flujo de pantalla y rutas, acceso con Google (enlace sin duplicar, cuenta nueva, cancelación y errores).
-- **ADR:** `docs/adr/0005-google-nativo-y-recuperacion-por-codigo.md`.
+- **Tests:** ViewModels de recuperación, pantallas y rutas, apertura del enlace (también durante el arranque), sesión de recuperación que no abre la app, acceso con Google (enlace sin duplicar, cuenta nueva, cancelación y errores).
+- **Configuración:** clientes OAuth de Google (Web y Android), proveedor Google y Redirect URL del deep link en Supabase; `googleWebClientId` y `passwordResetRedirect` en `lib/config.dart`.
+- **ADR:** `docs/adr/0005-google-nativo-y-recuperacion-por-codigo.md` y `docs/adr/0006-recuperacion-por-enlace-con-deep-link.md`.
 
 ## [*0.0.6*] 2026-11-03
 - **Rendimiento y arranque:** `runApp()` se ejecuta inmediatamente sin esperar llamadas de red previas, descartando el splash nativo de Android en menos de 50 ms.

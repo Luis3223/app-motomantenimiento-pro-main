@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:motomantenimiento_pro/data/auth/auth_repository.dart';
 import 'package:motomantenimiento_pro/data/auth/password_reset_repository.dart';
 
@@ -55,9 +57,17 @@ class FakeAuthRepository implements AuthRepository {
 
 class FakePasswordReset implements PasswordResetRepository {
   ResetRequestResult requestResult = ResetRequestResult.sent;
-  ResetConfirmResult confirmResult = ResetConfirmResult.updated;
+  PasswordUpdateResult updateResult = PasswordUpdateResult.updated;
   final requested = <String>[];
-  final confirmed = <({String email, String code, String password})>[];
+  final updatedPasswords = <String>[];
+  int cancelCalls = 0;
+  final _links = StreamController<RecoveryLink>.broadcast();
+
+  /// Simula abrir en el teléfono el enlace del correo.
+  void openLink(RecoveryLink link) => _links.add(link);
+
+  @override
+  Stream<RecoveryLink> get recoveryLinks => _links.stream;
 
   @override
   Future<ResetRequestResult> requestReset(String email) async {
@@ -66,12 +76,11 @@ class FakePasswordReset implements PasswordResetRepository {
   }
 
   @override
-  Future<ResetConfirmResult> confirmReset({
-    required String email,
-    required String code,
-    required String newPassword,
-  }) async {
-    confirmed.add((email: email, code: code, password: newPassword));
-    return confirmResult;
+  Future<PasswordUpdateResult> updatePassword(String newPassword) async {
+    updatedPasswords.add(newPassword);
+    return updateResult;
   }
+
+  @override
+  Future<void> cancelRecovery() async => cancelCalls++;
 }

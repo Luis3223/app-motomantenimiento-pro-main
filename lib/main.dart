@@ -58,6 +58,7 @@ Future<void> main() async {
 
   final remote = SupabaseRemoteNotifications();
   final repo = Repository();
+  final passwordReset = SupabasePasswordReset();
   final push = PushCoordinator(remote: remote, device: FirebaseDevicePush());
 
   final controller = AppController(
@@ -69,15 +70,11 @@ Future<void> main() async {
 
   // Iniciar la UI INMEDIATAMENTE para que Android descarte el splash nativo al instante
   runApp(
-    MotoApp(
-      controller: controller,
-      push: push,
-      passwordReset: SupabasePasswordReset(),
-    ),
+    MotoApp(controller: controller, push: push, passwordReset: passwordReset),
   );
 
   // Inicialización de servicios con timeout estricto para redes lentas
-  unawaited(_bootstrap(controller, remote, repo, push));
+  unawaited(_bootstrap(controller, remote, repo, push, passwordReset));
 }
 
 Future<void> _bootstrap(
@@ -85,12 +82,19 @@ Future<void> _bootstrap(
   SupabaseRemoteNotifications remote,
   Repository repo,
   PushCoordinator push,
+  SupabasePasswordReset passwordReset,
 ) async {
   // SQLite es local y abre en ~10ms. Supabase tiene timeout de 2s para conexiones lentas.
   await Future.wait([
     repo.init().catchError((_) {}),
     remote.init().timeout(const Duration(seconds: 2)).catchError((_) {}),
   ]);
+
+  try {
+    passwordReset.attach();
+  } catch (_) {
+    // Supabase no arrancó: no hay enlaces que escuchar en esta sesión.
+  }
 
   try {
     await controller.init().timeout(const Duration(seconds: 3));

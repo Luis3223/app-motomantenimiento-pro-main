@@ -1,28 +1,35 @@
-/// Resultado de pedir el código de recuperación.
+/// Resultado de pedir el enlace de recuperación.
 ///
 /// No existe un estado de "cuenta no encontrada": Supabase responde igual
 /// exista o no el correo, para no revelar quién es cliente (ADR 0005).
 enum ResetRequestResult { sent, rateLimited, offline, failed }
 
-/// Resultado de fijar la contraseña nueva con el código recibido.
-enum ResetConfirmResult {
+/// Lo que pasó al abrir en el teléfono el enlace del correo.
+enum RecoveryLink { opened, invalid }
+
+/// Resultado de fijar la contraseña nueva tras abrir el enlace.
+enum PasswordUpdateResult {
   updated,
-  invalidCode,
   weakPassword,
   samePassword,
+  expired,
   offline,
   failed,
 }
 
 abstract class PasswordResetRepository {
-  /// Envía un código de recuperación a [email].
+  /// Envía a [email] un enlace que abre la app en la pantalla de contraseña
+  /// nueva.
   Future<ResetRequestResult> requestReset(String email);
 
-  /// Verifica [code] y cambia la contraseña. Al terminar no deja sesión
-  /// abierta: el usuario entra después con la contraseña nueva.
-  Future<ResetConfirmResult> confirmReset({
-    required String email,
-    required String code,
-    required String newPassword,
-  });
+  /// Emite cada vez que el usuario abre un enlace de recuperación.
+  Stream<RecoveryLink> get recoveryLinks;
+
+  /// Cambia la contraseña con la sesión temporal del enlace. Si termina (bien
+  /// o con el enlace vencido) cierra esa sesión: el usuario entra después por
+  /// el login normal.
+  Future<PasswordUpdateResult> updatePassword(String newPassword);
+
+  /// Descarta la sesión temporal si el usuario abandona el cambio.
+  Future<void> cancelRecovery();
 }

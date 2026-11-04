@@ -4,6 +4,8 @@ status: accepted
 
 # Acceso con Google nativo y recuperación de contraseña por código
 
+> La parte de recuperación por código quedó reemplazada por `docs/adr/0006-recuperacion-por-enlace-con-deep-link.md`.
+
 Las tareas 23 y 24 se apoyan en Supabase Auth (ADR 0002). El acceso con Google usa el selector nativo de Android (`google_sign_in`) y entrega el ID token a `signInWithIdToken`; Supabase valida el token contra el cliente OAuth «Web» y enlaza la identidad con la cuenta que ya tenga el mismo correo verificado. La app reutiliza la copia local por correo normalizado (`adoptRemoteUser`), así que no se duplican cuentas. La recuperación de contraseña envía un código de un solo uso: el usuario lo escribe en la app junto con la contraseña nueva (`verifyOTP` + `updateUser`) y después entra por el login normal. El mensaje de envío es neutro («si el correo tiene una cuenta…»): no existe el estado «cuenta no encontrada».
 
 ## Considered Options

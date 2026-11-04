@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'auth_repository.dart';
 import 'google_credentials.dart';
+import 'session_claims.dart';
 
 class SupabaseAuthRepository implements AuthRepository {
   SupabaseAuthRepository({GoogleCredentials? google})
@@ -15,8 +16,8 @@ class SupabaseAuthRepository implements AuthRepository {
   @override
   Future<AuthIdentity?> currentSession() async {
     final session = _client.auth.currentSession;
-    final user = session?.user;
-    if (user == null) return null;
+    if (session == null || isRecoveryToken(session.accessToken)) return null;
+    final user = session.user;
     return AuthIdentity(userId: user.id, email: user.email ?? '');
   }
 

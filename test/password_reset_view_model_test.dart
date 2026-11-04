@@ -1,41 +1,34 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:motomantenimiento_pro/data/auth/password_reset_repository.dart';
+import 'package:motomantenimiento_pro/ui/features/auth/view_models/new_password_view_model.dart';
 import 'package:motomantenimiento_pro/ui/features/auth/view_models/password_reset_view_model.dart';
 
 import 'support/fake_auth_repository.dart';
 
 void main() {
   late FakePasswordReset repo;
-  late PasswordResetViewModel vm;
 
-  setUp(() {
-    repo = FakePasswordReset();
-    vm = PasswordResetViewModel(repo);
-  });
+  setUp(() => repo = FakePasswordReset());
 
-  Future<void> reachCodeStep() => vm.requestCode('luis@gmail.com');
+  group('pedir el enlace', () {
+    late PasswordResetViewModel vm;
 
-  group('pedir el código', () {
-    test('normaliza el correo y pasa al paso del código', () async {
-      await vm.requestCode('  Luis@Gmail.com ');
+    setUp(() => vm = PasswordResetViewModel(repo));
+
+    test('normaliza el correo y avisa sin revelar si existe', () async {
+      await vm.requestLink('  Luis@Gmail.com ');
 
       expect(repo.requested, ['luis@gmail.com']);
-      expect(vm.step, PasswordResetStep.code);
+      expect(vm.linkSent, isTrue);
       expect(vm.notice?.isError, isFalse);
-      expect(vm.notice?.text, contains('luis@gmail.com'));
-    });
-
-    test('el mensaje de envío no revela si la cuenta existe', () async {
-      await reachCodeStep();
-
       expect(vm.notice?.text, startsWith('Si luis@gmail.com tiene una cuenta'));
     });
 
     test('un correo inválido no llega a Supabase', () async {
-      await vm.requestCode('luis@');
+      await vm.requestLink('luis@');
 
       expect(repo.requested, isEmpty);
-      expect(vm.step, PasswordResetStep.email);
+      expect(vm.linkSent, isFalse);
       expect(vm.notice?.isError, isTrue);
     });
 
@@ -44,12 +37,12 @@ void main() {
       (ResetRequestResult.offline, 'Sin conexión'),
       (ResetRequestResult.failed, 'No se pudo enviar'),
     ]) {
-      test('$result queda en el paso del correo con error', () async {
+      test('$result muestra el error', () async {
         repo.requestResult = result;
 
-        await reachCodeStep();
+        await vm.requestLink('luis@gmail.com');
 
-        expect(vm.step, PasswordResetStep.email);
+        expect(vm.linkSent, isFalse);
         expect(vm.notice?.isError, isTrue);
         expect(vm.notice?.text, contains(text));
         expect(vm.busy, isFalse);
@@ -57,75 +50,57 @@ void main() {
     }
 
     test('reenviar usa el mismo correo', () async {
-      await reachCodeStep();
+      await vm.requestLink('luis@gmail.com');
 
-      await vm.resendCode();
+      await vm.resendLink();
 
       expect(repo.requested, ['luis@gmail.com', 'luis@gmail.com']);
     });
-
-    test('usar otro correo vuelve al primer paso', () async {
-      await reachCodeStep();
-
-      vm.changeEmail();
-
-      expect(vm.step, PasswordResetStep.email);
-      expect(vm.notice, isNull);
-    });
   });
 
-  group('cambiar la contraseña', () {
-    test('con código y contraseñas válidas termina', () async {
-      await reachCodeStep();
+  group('contraseña nueva', () {
+    late NewPasswordViewModel vm;
 
-      final updated = await vm.confirm(
-        code: ' 123456 ',
+    setUp(() => vm = NewPasswordViewModel(repo));
+
+    test('con contraseñas válidas termina', () async {
+      final updated = await vm.save(
         password: 'nueva123',
         confirmation: 'nueva123',
       );
 
-      expect(repo.confirmed.single, (
-        email: 'luis@gmail.com',
-        code: '123456',
-        password: 'nueva123',
-      ));
       expect(updated, isTrue);
+      expect(repo.updatedPasswords, ['nueva123']);
       expect(vm.notice?.isError, isFalse);
     });
 
-    for (final (code, password, confirmation, text) in [
-      ('12ab', 'nueva123', 'nueva123', 'código numérico'),
-      ('123456', '123', '123', 'al menos 6'),
-      ('123456', 'nueva123', 'otra1234', 'no coinciden'),
+    for (final (password, confirmation, text) in [
+      ('123', '123', 'al menos 6'),
+      ('nueva123', 'otra1234', 'no coinciden'),
     ]) {
       test('rechaza sin llamar a Supabase: $text', () async {
-        await reachCodeStep();
-
-        final updated = await vm.confirm(
-          code: code,
+        final updated = await vm.save(
           password: password,
           confirmation: confirmation,
         );
 
-        expect(repo.confirmed, isEmpty);
         expect(updated, isFalse);
+        expect(repo.updatedPasswords, isEmpty);
         expect(vm.notice?.text, contains(text));
       });
     }
 
     for (final (result, text) in [
-      (ResetConfirmResult.invalidCode, 'no es válido o ya venció'),
-      (ResetConfirmResult.weakPassword, 'al menos 6'),
-      (ResetConfirmResult.samePassword, 'distinta de la anterior'),
-      (ResetConfirmResult.offline, 'Sin conexión'),
-      (ResetConfirmResult.failed, 'No se pudo cambiar'),
+      (PasswordUpdateResult.weakPassword, 'al menos 6'),
+      (PasswordUpdateResult.samePassword, 'distinta de la anterior'),
+      (PasswordUpdateResult.expired, 'El enlace venció'),
+      (PasswordUpdateResult.offline, 'Sin conexión'),
+      (PasswordUpdateResult.failed, 'No se pudo cambiar'),
     ]) {
       test('$result muestra un error y no termina', () async {
-        await reachCodeStep();
-        repo.confirmResult = result;
+        repo.updateResult = result;
 
-        final updated = await vm.confirm(
-          code: '123456',
+        final updated = await vm.save(
           password: 'nueva123',
           confirmation: 'nueva123',
         );
@@ -135,5 +110,11 @@ void main() {
         expect(vm.notice?.text, contains(text));
       });
     }
+
+    test('cancelar descarta la sesión del enlace', () async {
+      await vm.cancel();
+
+      expect(repo.cancelCalls, 1);
+    });
   });
 }
