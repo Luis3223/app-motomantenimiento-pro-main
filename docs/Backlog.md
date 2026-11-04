@@ -171,12 +171,14 @@ Leyenda de esfuerzo: **S** (< 1 h) · **M** (medio día) · **L** (1+ días)
 - Definir el contrato de datos, autenticación y fuente de verdad antes de conectarla con la app.
 - Mantener la regla de 30 días configurable y no presentarla como definitiva hasta confirmarla con Casa Racing o el fabricante.
 
-### 23. Registro y acceso con Google · M
+### 23. ✅ Registro y acceso con Google · M
+> **Hecho (2026-11-03):** botón «Continuar con Google» en login y registro con `google_sign_in` nativo + `signInWithIdToken` de Supabase Auth. Supabase enlaza la identidad con la cuenta que ya tiene ese correo verificado y la app reutiliza la copia local por correo normalizado, sin duplicar cuentas. Una cuenta nueva entra con el perfil vacío y se le pide completar la moto. Falta configuración externa: clientes OAuth «Web» y «Android» (SHA-1) en Google Cloud, proveedor Google en Supabase y `googleWebClientId` en `lib/config.dart`; mientras esté vacío, el botón avisa que no está disponible. ADR `docs/adr/0005-google-nativo-y-recuperacion-por-codigo.md`.
 - Añadir registro e inicio de sesión con Google.
 - Vincular la cuenta social con el usuario local existente sin duplicar cuentas por correo normalizado.
 - La autenticación es Supabase Auth (ADR 0002). No debe implementarse como una simulación local.
 
-### 24. Recuperación y reenvío de contraseña · M
+### 24. ✅ Recuperación y reenvío de contraseña · M
+> **Hecho (2026-11-03):** «¿Olvidaste tu contraseña?» abre `/forgot-password`: se pide un código al correo (`resetPasswordForEmail`), se puede reenviar y se fija la contraseña nueva con `verifyOTP` + `updateUser`. Estados: código enviado, correo inválido, demasiados intentos, sin conexión, código vencido, contraseña débil o igual a la anterior. No hay estado «cuenta no encontrada»: Supabase no revela si un correo existe y el mensaje es neutro (ADR 0005). Falta editar la plantilla «Reset password» de Supabase para que incluya `{{ .Token }}`. Primer ViewModel de la estructura `lib/ui/features/` (tarea 20).
 - Permitir solicitar el reenvío o restablecimiento de contraseña desde la pantalla de login.
 - Mostrar estados claros para correo enviado, cuenta no encontrada y solicitud inválida.
 - El restablecimiento sale de Supabase Auth (ADR 0002); no exponer contraseñas almacenadas.

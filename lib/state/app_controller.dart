@@ -12,6 +12,7 @@ import '../data/repository.dart';
 import '../data/sync/sqlite_sync_store.dart';
 import '../data/sync/sync_engine.dart';
 import '../data/sync/sync_remote.dart';
+import '../domain/email.dart';
 import '../domain/session_sync.dart';
 
 class AppController extends ChangeNotifier {
@@ -249,10 +250,6 @@ class AppController extends ChangeNotifier {
     notifications = List.of(_repository.notifications);
   }
 
-  static String _normalizeEmail(String email) => email.trim().toLowerCase();
-
-  static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-
   void _startSession() {
     currentUser = _repository.currentUser;
     _shownAlertTitles.clear();
@@ -279,7 +276,7 @@ class AppController extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-    final normalized = _normalizeEmail(email);
+    final normalized = normalizeEmail(email);
     final gate = auth;
     if (gate == null) {
       final success = await _repository.login(normalized, pass);
@@ -301,12 +298,7 @@ class AppController extends ChangeNotifier {
       return false;
     }
     if (outcome is AuthSignedIn) {
-      await _repository.adoptRemoteUser(
-        email: normalized,
-        userId: outcome.userId,
-      );
-      await _syncNow();
-      _startSession();
+      await _enterRemoteSession(email: normalized, userId: outcome.userId);
       feedbackMessage = '¡Bienvenido de nuevo!';
       notifyListeners();
       return true;
@@ -320,12 +312,7 @@ class AppController extends ChangeNotifier {
     }
     final created = await gate.signUp(email: normalized, password: pass);
     if (created is AuthSignedIn) {
-      await _repository.adoptRemoteUser(
-        email: normalized,
-        userId: created.userId,
-      );
-      await _syncNow();
-      _startSession();
+      await _enterRemoteSession(email: normalized, userId: created.userId);
       feedbackMessage = '¡Bienvenido de nuevo!';
       notifyListeners();
       return true;
@@ -336,6 +323,45 @@ class AppController extends ChangeNotifier {
         : 'Credenciales incorrectas. Por favor, intente de nuevo.';
     notifyListeners();
     return false;
+  }
+
+  /// Entra o crea la cuenta con Google. Si ya hay una cuenta con el mismo
+  /// correo, Supabase devuelve ese mismo usuario y aquí se reutiliza su copia
+  /// local, así que no se duplican cuentas.
+  Future<bool> handleGoogleSignIn() async {
+    final gate = auth;
+    final outcome = gate == null
+        ? const AuthUnavailable()
+        : await gate.signInWithGoogle();
+    switch (outcome) {
+      case AuthSignedIn(:final email, :final userId):
+        await _enterRemoteSession(email: normalizeEmail(email), userId: userId);
+        feedbackMessage = currentUser!.bikeModel.isEmpty
+            ? '¡Bienvenido! Completa los datos de tu moto en Perfil.'
+            : '¡Bienvenido de nuevo!';
+        notifyListeners();
+        return true;
+      case AuthCancelled():
+        return false;
+      case AuthOffline():
+        feedbackMessage = 'Sin conexión no se puede iniciar sesión.';
+      case AuthUnavailable():
+        feedbackMessage = 'El acceso con Google no está disponible por ahora.';
+      case AuthFailed():
+        feedbackMessage =
+            'No se pudo iniciar sesión con Google. Inténtalo de nuevo.';
+    }
+    notifyListeners();
+    return false;
+  }
+
+  Future<void> _enterRemoteSession({
+    required String email,
+    required String userId,
+  }) async {
+    await _repository.adoptRemoteUser(email: email, userId: userId);
+    await _syncNow();
+    _startSession();
   }
 
   Future<bool> handleRegister({
@@ -352,8 +378,8 @@ class AppController extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-    final normalizedEmail = _normalizeEmail(email);
-    if (!_emailPattern.hasMatch(normalizedEmail)) {
+    final normalizedEmail = normalizeEmail(email);
+    if (!isValidEmail(normalizedEmail)) {
       feedbackMessage = 'Ingresa un correo electrónico válido.';
       notifyListeners();
       return false;

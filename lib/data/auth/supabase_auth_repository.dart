@@ -1,8 +1,15 @@
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'auth_repository.dart';
+import 'google_credentials.dart';
 
 class SupabaseAuthRepository implements AuthRepository {
+  SupabaseAuthRepository({GoogleCredentials? google})
+    : _google = google ?? NativeGoogleCredentials();
+
+  final GoogleCredentials _google;
+
   SupabaseClient get _client => Supabase.instance.client;
 
   @override
@@ -42,7 +49,37 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<AuthOutcome> signInWithGoogle() async {
+    final String? idToken;
+    try {
+      idToken = await _google.idToken();
+    } on GoogleNotConfigured {
+      return const AuthUnavailable();
+    } on GoogleSignInException catch (error) {
+      return error.code == GoogleSignInExceptionCode.clientConfigurationError ||
+              error.code == GoogleSignInExceptionCode.providerConfigurationError
+          ? const AuthUnavailable()
+          : const AuthFailed();
+    } catch (_) {
+      return const AuthOffline();
+    }
+    if (idToken == null) return const AuthCancelled();
+    return _run(() async {
+      final response = await _client.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken!,
+      );
+      return _signedIn(response.user, '');
+    });
+  }
+
+  @override
   Future<void> signOut() async {
+    try {
+      await _google.signOut();
+    } catch (_) {
+      // Sin sesión de Google no hay nada que cerrar.
+    }
     if (_client.auth.currentSession == null) return;
     await _client.auth.signOut();
   }
@@ -60,8 +97,7 @@ class SupabaseAuthRepository implements AuthRepository {
   }
 
   AuthOutcome _signedIn(User? user, String email) {
-    if (user == null) return const AuthFailed();
-    if (_client.auth.currentSession == null) {
+    if (user == null || _client.auth.currentSession == null) {
       return const AuthFailed();
     }
     return AuthSignedIn(userId: user.id, email: user.email ?? email);

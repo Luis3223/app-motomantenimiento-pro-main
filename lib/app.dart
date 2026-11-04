@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'config.dart';
+import 'data/auth/password_reset_repository.dart';
 import 'data/push/push_coordinator.dart';
 import 'data/push/push_message.dart';
 import 'router/app_router.dart';
@@ -10,10 +11,16 @@ import 'state/app_controller.dart';
 import 'theme/app_theme.dart';
 
 class MotoApp extends StatefulWidget {
-  const MotoApp({super.key, required this.controller, this.push});
+  const MotoApp({
+    super.key,
+    required this.controller,
+    this.push,
+    required this.passwordReset,
+  });
 
   final AppController controller;
   final PushCoordinator? push;
+  final PasswordResetRepository passwordReset;
 
   @override
   State<MotoApp> createState() => _MotoAppState();
@@ -73,6 +80,7 @@ class _MotoAppState extends State<MotoApp> with WidgetsBindingObserver {
       providers: [
         ChangeNotifierProvider.value(value: widget.controller),
         if (push != null) Provider<PushCoordinator>.value(value: push),
+        Provider<PasswordResetRepository>.value(value: widget.passwordReset),
       ],
       child: MaterialApp.router(
         title: 'MotoMantenimiento Pro',

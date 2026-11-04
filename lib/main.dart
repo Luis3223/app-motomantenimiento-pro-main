@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'app.dart';
 import 'data/auth/supabase_auth_repository.dart';
+import 'data/auth/supabase_password_reset.dart';
 import 'data/push/firebase_device_push.dart';
 import 'data/push/push_coordinator.dart';
 import 'data/push/supabase_remote_notifications.dart';
@@ -67,7 +68,13 @@ Future<void> main() async {
   );
 
   // Iniciar la UI INMEDIATAMENTE para que Android descarte el splash nativo al instante
-  runApp(MotoApp(controller: controller, push: push));
+  runApp(
+    MotoApp(
+      controller: controller,
+      push: push,
+      passwordReset: SupabasePasswordReset(),
+    ),
+  );
 
   // Inicialización de servicios con timeout estricto para redes lentas
   unawaited(_bootstrap(controller, remote, repo, push));

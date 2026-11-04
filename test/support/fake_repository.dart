@@ -129,7 +129,18 @@ class FakeRepository extends Repository {
   }) async {
     final index = users.indexWhere((user) => user.email == email);
     if (index < 0) {
-      final created = testUser(email: email).copyWith(id: userId, password: '');
+      // Como el repositorio real: una cuenta nueva llega sin datos de la moto.
+      final created = AppUser(
+        id: userId,
+        email: email,
+        password: '',
+        name: '',
+        bikeModel: '',
+        bikePlate: '',
+        bikeYear: '',
+        bikeVin: '',
+        profileImage: '',
+      );
       users.add(created);
       currentUser = created;
       return;

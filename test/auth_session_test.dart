@@ -5,6 +5,7 @@ import 'package:motomantenimiento_pro/data/auth/auth_repository.dart';
 import 'package:motomantenimiento_pro/data/sync/sync_engine.dart';
 import 'package:motomantenimiento_pro/state/app_controller.dart';
 
+import 'support/fake_auth_repository.dart';
 import 'support/fake_repository.dart';
 
 void main() {
@@ -108,44 +109,6 @@ void main() {
       contains('Se enviará cuando haya conexión'),
     );
   });
-}
-
-class FakeAuthRepository implements AuthRepository {
-  final accounts = <String, ({String userId, String password})>{};
-  AuthIdentity? session;
-
-  @override
-  Future<AuthIdentity?> currentSession() async => session;
-
-  @override
-  Future<AuthOutcome> signIn({
-    required String email,
-    required String password,
-  }) async {
-    final account = accounts[email];
-    if (account == null || account.password != password) {
-      return const AuthFailed();
-    }
-    session = AuthIdentity(userId: account.userId, email: email);
-    return AuthSignedIn(userId: account.userId, email: email);
-  }
-
-  @override
-  Future<AuthOutcome> signUp({
-    required String email,
-    required String password,
-  }) async {
-    if (accounts.containsKey(email)) {
-      return const AuthFailed(alreadyRegistered: true);
-    }
-    final userId = 'user-$email';
-    accounts[email] = (userId: userId, password: password);
-    session = AuthIdentity(userId: userId, email: email);
-    return AuthSignedIn(userId: userId, email: email);
-  }
-
-  @override
-  Future<void> signOut() async => session = null;
 }
 
 class _OfflineSync implements HistorySync {

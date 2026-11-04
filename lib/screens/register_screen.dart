@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../state/app_controller.dart';
 import '../theme/app_theme.dart';
+import '../widgets/auth_text_field.dart';
+import '../widgets/google_sign_in_button.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -20,7 +22,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _plate = TextEditingController();
   final _year = TextEditingController();
   final _vin = TextEditingController();
-  bool _obscure = true;
   bool _loading = false;
 
   @override
@@ -212,8 +213,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(height: 30),
 
                             // Name Input
-                            _buildInputForm(
-                              context,
+                            AuthTextField(
                               hint: 'Nombre completo',
                               icon: Icons.person_outline,
                               controller: _name,
@@ -222,8 +222,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(height: 16),
 
                             // Email Input
-                            _buildInputForm(
-                              context,
+                            AuthTextField(
                               hint: 'Correo electrónico',
                               icon: Icons.email_outlined,
                               controller: _email,
@@ -233,8 +232,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(height: 16),
 
                             // Password Input
-                            _buildInputForm(
-                              context,
+                            AuthTextField(
                               hint: 'Contraseña',
                               icon: Icons.lock_outline,
                               controller: _password,
@@ -244,8 +242,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(height: 16),
 
                             // Bike Model Input
-                            _buildInputForm(
-                              context,
+                            AuthTextField(
                               hint: 'Modelo de tu Moto (ej. Yamaha R6)',
                               icon: Icons.two_wheeler_outlined,
                               controller: _model,
@@ -254,8 +251,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(height: 16),
 
                             // Plate Input
-                            _buildInputForm(
-                              context,
+                            AuthTextField(
                               hint: 'Placa de la Moto (ej. XYZ-123)',
                               icon: Icons.tag_outlined,
                               controller: _plate,
@@ -264,8 +260,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(height: 16),
 
                             // Year Input (optional)
-                            _buildInputForm(
-                              context,
+                            AuthTextField(
                               hint: 'Año de la moto (opcional)',
                               icon: Icons.calendar_today_outlined,
                               controller: _year,
@@ -275,8 +270,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(height: 16),
 
                             // VIN Input (optional)
-                            _buildInputForm(
-                              context,
+                            AuthTextField(
                               hint: 'VIN (opcional)',
                               icon: Icons.confirmation_number_outlined,
                               controller: _vin,
@@ -343,6 +337,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                             ),
 
+                            const SizedBox(height: 16),
+
+                            const GoogleSignInButton(),
+
                             const SizedBox(height: 24),
 
                             // Create Account
@@ -394,54 +392,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ],
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInputForm(
-    BuildContext context, {
-    required String hint,
-    required IconData icon,
-    required TextEditingController controller,
-    bool isPassword = false,
-    TextInputType? keyboardType,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: context.cardColor, // Dark input background
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.dividerColor),
-      ),
-      child: TextField(
-        controller: controller,
-        obscureText: isPassword ? _obscure : false,
-        keyboardType: keyboardType,
-        style: TextStyle(color: context.textPrimary),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(
-            color: context.textSecondary.withValues(alpha: 0.5),
-            fontSize: 14,
-          ),
-          prefixIcon: Icon(icon, color: AppColors.strongRed, size: 20),
-          suffixIcon: isPassword
-              ? IconButton(
-                  icon: Icon(
-                    _obscure
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                    color: context.textSecondary,
-                    size: 20,
-                  ),
-                  onPressed: () => setState(() => _obscure = !_obscure),
-                )
-              : null,
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 18,
           ),
         ),
       ),

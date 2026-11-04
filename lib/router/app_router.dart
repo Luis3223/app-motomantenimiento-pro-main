@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../data/auth/password_reset_repository.dart';
 import '../state/app_controller.dart';
 import '../theme/app_theme.dart';
 import '../screens/add_registry_screen.dart';
@@ -17,6 +18,8 @@ import '../screens/register_screen.dart';
 import '../screens/service_detail_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/splash_screen.dart';
+import '../ui/features/auth/view_models/password_reset_view_model.dart';
+import '../ui/features/auth/views/password_reset_screen.dart';
 import '../widgets/notification_banner.dart';
 
 const whatsappNumber = '3225062876';
@@ -36,6 +39,9 @@ Future<void> openStore() async {
   }
 }
 
+/// Rutas de acceso: abiertas sin sesión y cerradas con ella.
+const _publicRoutes = {'/login', '/register', '/forgot-password'};
+
 GoRouter createAppRouter(AppController controller) {
   return GoRouter(
     initialLocation: '/login',
@@ -46,7 +52,7 @@ GoRouter createAppRouter(AppController controller) {
         return loc == '/splash' ? null : '/splash';
       }
       final loggedIn = controller.currentUser != null;
-      final onAuth = loc == '/login' || loc == '/register';
+      final onAuth = _publicRoutes.contains(loc);
       if (loc == '/splash') {
         return loggedIn ? '/garage' : '/login';
       }
@@ -65,6 +71,14 @@ GoRouter createAppRouter(AppController controller) {
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/register', builder: (context, state) => RegisterScreen()),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => ChangeNotifierProvider(
+          create: (context) =>
+              PasswordResetViewModel(context.read<PasswordResetRepository>()),
+          child: const PasswordResetScreen(),
+        ),
+      ),
       GoRoute(
         path: '/manage-services',
         builder: (context, state) => ManageServiceTypesScreen(),
