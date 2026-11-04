@@ -270,32 +270,26 @@ class DashboardScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(4),
                             child: Container(
                               height: 8,
+                              width: double.infinity,
                               decoration: BoxDecoration(
                                 color: context.dividerColor,
                               ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    flex: ((oil?.progress ?? 0.6) * 100)
-                                        .toInt(),
-                                    child: Container(
-                                      decoration: const BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            AppColors.strongRed,
-                                            Color(0xFF660000),
-                                          ],
-                                        ),
-                                      ),
+                              alignment: Alignment.centerLeft,
+                              child: FractionallySizedBox(
+                                widthFactor: (oil?.progress ?? 0.6).clamp(
+                                  0.0,
+                                  1.0,
+                                ),
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        AppColors.strongRed,
+                                        Color(0xFF660000),
+                                      ],
                                     ),
                                   ),
-                                  Expanded(
-                                    flex:
-                                        100 -
-                                        ((oil?.progress ?? 0.6) * 100).toInt(),
-                                    child: const SizedBox(),
-                                  ),
-                                ],
+                                ),
                               ),
                             ),
                           ),

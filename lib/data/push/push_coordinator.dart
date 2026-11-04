@@ -22,15 +22,23 @@ class PushCoordinator implements SessionSync {
   StreamSubscription<String>? _tokenSub;
 
   Future<void> start() async {
-    await device.start();
-    _pendingOpen = await device.takeInitialMessage();
-    _foregroundSub = device.foregroundMessages.listen((message) {
-      _onForeground?.call(message);
-    });
-    _openedSub = device.openedMessages.listen(_deliverOpen);
-    _tokenSub = device.tokenRefresh.listen((_) {
+    try {
+      await device.start();
+      _pendingOpen = await device.takeInitialMessage();
+      _foregroundSub = device.foregroundMessages.listen((message) {
+        _onForeground?.call(message);
+      });
+      _openedSub = device.openedMessages.listen(_deliverOpen);
+      _tokenSub = device.tokenRefresh.listen((_) {
+        unawaited(_pushTokenAndOil());
+      });
+      final pending = _pendingOpen;
+      if (pending != null && _onOpened != null) {
+        _pendingOpen = null;
+        _deliverOpen(pending);
+      }
       unawaited(_pushTokenAndOil());
-    });
+    } catch (_) {}
   }
 
   void attach({

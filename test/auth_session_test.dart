@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:motomantenimiento_pro/data/auth/auth_repository.dart';
 import 'package:motomantenimiento_pro/data/sync/sync_engine.dart';
@@ -47,6 +49,40 @@ void main() {
     await controller.init();
 
     expect(controller.currentUser, isNull);
+  });
+
+  test('con sesión activa el arranque es instantáneo desde la caché local sin esperar sync remoto', () async {
+    final repo = FakeRepository();
+    final auth = FakeAuthRepository()
+      ..session = const AuthIdentity(
+        userId: 'uuid-luis',
+        email: 'luis@gmail.com',
+      );
+    final sync = _HangingSync();
+    final controller = AppController(repository: repo, auth: auth, sync: sync);
+
+    await controller.init();
+
+    expect(controller.ready, isTrue);
+    expect(controller.currentUser?.id, 'uuid-luis');
+    expect(controller.currentUser?.email, 'luis@gmail.com');
+  });
+
+  test('con sesión activa el arranque es instantáneo desde la caché local sin esperar sync remoto', () async {
+    final repo = FakeRepository();
+    final auth = FakeAuthRepository()
+      ..session = const AuthIdentity(
+        userId: 'uuid-luis',
+        email: 'luis@gmail.com',
+      );
+    final sync = _HangingSync();
+    final controller = AppController(repository: repo, auth: auth, sync: sync);
+
+    await controller.init();
+
+    expect(controller.ready, isTrue);
+    expect(controller.currentUser?.id, 'uuid-luis');
+    expect(controller.currentUser?.email, 'luis@gmail.com');
   });
 
   test('si el envío falla, el alta avisa que queda pendiente', () async {
@@ -120,4 +156,14 @@ class _OfflineSync implements HistorySync {
 
   @override
   Future<void> pull() async => throw StateError('sin red');
+}
+
+class _HangingSync implements HistorySync {
+  final completer = Completer<void>();
+
+  @override
+  Future<bool> flush() => completer.future.then((_) => true);
+
+  @override
+  Future<void> pull() => completer.future;
 }

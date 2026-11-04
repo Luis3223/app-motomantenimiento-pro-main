@@ -16,6 +16,7 @@ import '../screens/profile_screen.dart';
 import '../screens/register_screen.dart';
 import '../screens/service_detail_screen.dart';
 import '../screens/settings_screen.dart';
+import '../screens/splash_screen.dart';
 import '../widgets/notification_banner.dart';
 
 const whatsappNumber = '3225062876';
@@ -40,10 +41,15 @@ GoRouter createAppRouter(AppController controller) {
     initialLocation: '/login',
     refreshListenable: controller,
     redirect: (context, state) {
-      final loggedIn = controller.currentUser != null;
       final loc = state.matchedLocation;
+      if (!controller.ready) {
+        return loc == '/splash' ? null : '/splash';
+      }
+      final loggedIn = controller.currentUser != null;
       final onAuth = loc == '/login' || loc == '/register';
-      if (!controller.ready) return null;
+      if (loc == '/splash') {
+        return loggedIn ? '/garage' : '/login';
+      }
       if (!loggedIn && !onAuth) return '/login';
       if (loggedIn && onAuth) return '/garage';
       if (loc.startsWith('/history/admin') &&
@@ -53,6 +59,10 @@ GoRouter createAppRouter(AppController controller) {
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/register', builder: (context, state) => RegisterScreen()),
       GoRoute(

@@ -44,6 +44,7 @@ class Repository {
   }
 
   Future<void> init() async {
+    if (_db != null) return;
     _db = await AppDatabase.instance();
     await _db!.execute(
       'CREATE TABLE IF NOT EXISTS service_types (name TEXT PRIMARY KEY, isDefault INTEGER DEFAULT 0)',
@@ -566,18 +567,20 @@ class Repository {
   }
 
   Future<void> _ensureSyncIds() async {
-    final rows = await db.query('services', where: 'sync_id IS NULL');
-    for (final row in rows) {
-      await db.update(
-        'services',
-        {'sync_id': newSyncId()},
-        where: 'id = ?',
-        whereArgs: [row['id']],
+    try {
+      final rows = await db.query('services', where: 'sync_id IS NULL');
+      for (final row in rows) {
+        await db.update(
+          'services',
+          {'sync_id': newSyncId()},
+          where: 'id = ?',
+          whereArgs: [row['id']],
+        );
+      }
+      await db.execute(
+        'CREATE UNIQUE INDEX IF NOT EXISTS services_sync_id_idx ON services(sync_id)',
       );
-    }
-    await db.execute(
-      'CREATE UNIQUE INDEX IF NOT EXISTS services_sync_id_idx ON services(sync_id)',
-    );
+    } catch (_) {}
   }
 
   Future<void> dispose() async {

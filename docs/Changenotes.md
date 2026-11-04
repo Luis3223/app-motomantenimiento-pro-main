@@ -1,5 +1,12 @@
 # Changenotes
 
+## [*0.0.6*] 2026-11-03
+- **Rendimiento y arranque:** `runApp()` se ejecuta inmediatamente sin esperar llamadas de red previas, descartando el splash nativo de Android en menos de 50 ms.
+- **Arranque tolerante a fallos:** timeouts estrictos de 2 y 3 segundos en llamadas de red para redes lentas o caídas; respaldo automático a sesión SQLite local si falla Supabase Auth.
+- **UI:** nueva pantalla de transición `SplashScreen` (`/splash`), fondo de splash nativo Android adaptado a `#121212` con soporte para Android 12+ SplashScreen API.
+- **Correcciones (pantalla negra):** reemplazo de `Expanded(flex: 0)` en `DashboardScreen` por `FractionallySizedBox` cuando el aceite está vencido; migraciones SQLite protegidas con `_safeAddColumn`.
+- **Tests:** nueva prueba unitaria en `test/auth_session_test.dart` que valida que el inicio con sesión activa no bloquea en la sincronización remota.
+
 ## [proyecto] 2026-10-21
 - **Documentación:** ADR `docs/adr/0004-firebase-cloud-messaging-para-notificaciones.md` describe el uso real de Firebase como canal FCM para Android, su integración con Supabase y los flujos de recepción y navegación.
 - **Login:** se quitó el recuadro con las credenciales demo, también en debug. Las cuentas demo siguen existiendo solo en debug. El test de `test/login_screen_test.dart` comprueba que no aparecen correos ni contraseña demo.

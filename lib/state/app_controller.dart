@@ -31,6 +31,14 @@ class AppController extends ChangeNotifier {
   HistorySync? _engine;
 
   bool ready = false;
+
+  void markReady() {
+    if (!ready) {
+      ready = true;
+      notifyListeners();
+    }
+  }
+
   AppUser? currentUser;
   List<InAppNotification> notifications = [];
   List<AppUser> allUsers = [];
@@ -74,16 +82,25 @@ class AppController extends ChangeNotifier {
     });
 
     if (auth != null) {
-      final session = await auth!.currentSession();
-      if (session == null) {
-        await _repository.logout();
-      } else {
-        await _repository.adoptRemoteUser(
-          email: session.email,
-          userId: session.userId,
+      try {
+        final session = await auth!.currentSession().timeout(
+          const Duration(seconds: 2),
+          onTimeout: () => null,
         );
-        await _syncNow();
-        if (_repository.currentUser != null) _startSession();
+        if (session == null) {
+          await _repository.logout();
+        } else {
+          await _repository.adoptRemoteUser(
+            email: session.email,
+            userId: session.userId,
+          );
+          if (_repository.currentUser != null) _startSession();
+          unawaited(_syncNow());
+        }
+      } catch (_) {
+        if (await _repository.restoreSession() != null) {
+          _startSession();
+        }
       }
     } else if (await _repository.restoreSession() != null) {
       _startSession();
@@ -524,7 +541,10 @@ class AppController extends ChangeNotifier {
         final refreshed = await _repository.getUserById(id);
         if (refreshed != null) {
           _repository.currentUser = refreshed;
-          if (currentUser != null) currentUser = refreshed;
+          if (currentUser != null) {
+            currentUser = refreshed;
+            notifyListeners();
+          }
         }
       }
       return delivered;

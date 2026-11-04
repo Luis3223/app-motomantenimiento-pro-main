@@ -90,6 +90,18 @@ class AppDatabase {
     }
   }
 
+  static Future<void> _safeAddColumn(
+    Database db,
+    String table,
+    String columnDef,
+  ) async {
+    try {
+      await db.execute('ALTER TABLE $table ADD COLUMN $columnDef');
+    } catch (_) {
+      // Ignora si la columna ya existía al actualizar sobre una versión previa.
+    }
+  }
+
   /// Migraciones incrementales: cada paso transforma el esquema conservando
   /// los datos. Las versiones nuevas deben usar `ALTER TABLE`, nunca
   /// `DROP TABLE`.
@@ -110,12 +122,10 @@ class AppDatabase {
       await _hashPlaintextPasswords(db);
     }
     if (oldVersion < 4) {
-      await db.execute('ALTER TABLE users ADD COLUMN remote_updated_at TEXT');
-      await db.execute('ALTER TABLE services ADD COLUMN sync_id TEXT');
-      await db.execute(
-        'ALTER TABLE services ADD COLUMN remote_updated_at TEXT',
-      );
-      await db.execute('ALTER TABLE services ADD COLUMN deleted_at TEXT');
+      await _safeAddColumn(db, 'users', 'remote_updated_at TEXT');
+      await _safeAddColumn(db, 'services', 'sync_id TEXT');
+      await _safeAddColumn(db, 'services', 'remote_updated_at TEXT');
+      await _safeAddColumn(db, 'services', 'deleted_at TEXT');
       await _createPendingTable(db);
     }
   }
